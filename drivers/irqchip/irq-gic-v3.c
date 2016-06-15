@@ -26,16 +26,7 @@
 #include <linux/percpu.h>
 #include <linux/slab.h>
 #include <linux/module.h>
-
-/*Add-begin
-**JIRA-id:HMI_L6651_A01-202
-**Author:lijiang@longcheer.com
-**Date:2017-10-26
-**Comment:Logging kernel wakeup reson
-*/
 #include <linux/wakeup_reason.h>
-/*Add-end HMI_L6651_A01-202*/
-
 
 #include <linux/irqchip.h>
 #include <linux/irqchip/arm-gic-v3.h>
@@ -453,15 +444,7 @@ static void gic_show_resume_irq(struct gic_chip_data *gic)
 		else if (desc->action && desc->action->name)
 			name = desc->action->name;
 
-		/*Add-begin
-		**JIRA-id:HMI_L6651_A01-202
-		**Author:lijiang@longcheer.com
-		**Date:2017-10-26
-		**Comment:Logging kernel wakeup reson
-		*/
-		log_wakeup_reason(irq);
-		/*Add-end HMI_L6651_A01-202*/
-
+		log_base_wakeup_reason(irq);
 		pr_warn("%s: %d triggered %s\n", __func__, irq, name);
 	}
 }
