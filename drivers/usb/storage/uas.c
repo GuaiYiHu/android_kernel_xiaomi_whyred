@@ -3,6 +3,7 @@
  * Note that this is not the same as the USB Mass Storage driver
  *
  * Copyright Hans de Goede <hdegoede@redhat.com> for Red Hat, Inc. 2013 - 2016
+ * Copyright (C) 2018 XiaoMi, Inc.
  * Copyright Matthew Wilcox for Intel Corp, 2010
  * Copyright Sarah Sharp for Intel Corp, 2010
  *

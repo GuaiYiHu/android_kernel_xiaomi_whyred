@@ -1,4 +1,5 @@
 /* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1079,6 +1080,7 @@ static void device_restart_work_hdlr(struct work_struct *work)
 							dev->desc->name);
 }
 
+extern int download_mode;
 int subsystem_restart_dev(struct subsys_device *dev)
 {
 	const char *name;
@@ -1103,6 +1105,15 @@ int subsystem_restart_dev(struct subsys_device *dev)
 		pr_err("%s crashed during a system poweroff/shutdown.\n", name);
 		return -EBUSY;
 	}
+
+	if (download_mode == 0){
+		dev->restart_level = 1;
+	}
+	/*enable ssr for nv check by dingjian 20180607 begin*/
+	#ifdef CONFIG_KERNEL_CUSTOM_TULIP
+	dev->restart_level = 1;
+	#endif
+	/*enable ssr for nv check by dingjian 20180607 end*/
 
 	pr_info("Restart sequence requested for %s, restart_level = %s.\n",
 		name, restart_levels[dev->restart_level]);

@@ -6,6 +6,7 @@
  *
  * Original driver (sg.c):
  *        Copyright (C) 1992 Lawrence Foard
+ * Copyright (C) 2018 XiaoMi, Inc.
  * Version 2 and 3 extensions to driver:
  *        Copyright (C) 1998 - 2014 Douglas Gilbert
  *

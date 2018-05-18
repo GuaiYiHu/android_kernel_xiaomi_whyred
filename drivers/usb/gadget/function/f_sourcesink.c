@@ -2,6 +2,7 @@
  * f_sourcesink.c - USB peripheral source/sink configuration driver
  *
  * Copyright (C) 2003-2008 David Brownell
+ * Copyright (C) 2018 XiaoMi, Inc.
  * Copyright (C) 2008 by Nokia Corporation
  *
  * This program is free software; you can redistribute it and/or modify

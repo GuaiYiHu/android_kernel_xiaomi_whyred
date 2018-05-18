@@ -1,6 +1,7 @@
 /*
    HIDP implementation for Linux Bluetooth stack (BlueZ).
    Copyright (C) 2003-2004 Marcel Holtmann <marcel@holtmann.org>
+   Copyright (C) 2018 XiaoMi, Inc.
    Copyright (C) 2013 David Herrmann <dh.herrmann@gmail.com>
 
    This program is free software; you can redistribute it and/or modify

@@ -1,4 +1,5 @@
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -59,7 +60,11 @@
 #define SPK_PMD 2
 #define SPK_PMU 3
 
-#define MICBIAS_DEFAULT_VAL 1800000
+#ifdef CONFIG_KERNEL_CUSTOM_WAYNE
+#define MICBIAS_DEFAULT_VAL 2600000
+#else
+#define MICBIAS_DEFAULT_VAL 2600000
+#endif
 #define MICBIAS_MIN_VAL 1600000
 #define MICBIAS_STEP_SIZE 50000
 
@@ -85,6 +90,7 @@ static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 25, 1);
 static struct snd_soc_dai_driver msm_anlg_cdc_i2s_dai[];
 /* By default enable the internal speaker boost */
 static bool spkr_boost_en = true;
+bool hs_record_active = false;
 
 static char on_demand_supply_name[][MAX_ON_DEMAND_SUPPLY_NAME_LENGTH] = {
 	"cdc-vdd-mic-bias",
@@ -2576,6 +2582,8 @@ static int msm_anlg_cdc_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		if (strnstr(w->name, external2_text, strlen(w->name)))
+				hs_record_active = true;
 		if (get_codec_version(sdm660_cdc) <= TOMBAK_2_0)
 			/*
 			 * Wait for 20ms post micbias enable
@@ -2596,6 +2604,8 @@ static int msm_anlg_cdc_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		if (strnstr(w->name, external2_text, strlen(w->name)))
+			   hs_record_active = false;
 		if (strnstr(w->name, internal1_text, strlen(w->name))) {
 			snd_soc_update_bits(codec, micb_int_reg, 0xC0, 0x40);
 		} else if (strnstr(w->name, internal2_text, strlen(w->name))) {
@@ -3338,7 +3348,7 @@ static int msm_anlg_cdc_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	struct sdm660_cdc_priv *sdm660_cdc =
 					snd_soc_codec_get_drvdata(codec);
-
+	pr_info("msm_anlg_cdc_codec_enable_ear_pa event = %d\n", event);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		dev_dbg(codec->dev,
@@ -3991,8 +4001,11 @@ static void msm_anlg_cdc_configure_cap(struct snd_soc_codec *codec,
 				MSM89XX_PMIC_ANALOG_MICB_1_EN,
 				0x40, (MICBIAS_NO_EXT_BYP_CAP << 6));
 	} else if (micbias2) {
+#if defined(CONFIG_KERNEL_CUSTOM_TULIP)
+#else
 		snd_soc_update_bits(codec, MSM89XX_PMIC_ANALOG_MICB_1_EN,
 				0x40, (pdata->micbias2_cap_mode << 6));
+#endif
 	} else if (micbias1) {
 		snd_soc_update_bits(codec, MSM89XX_PMIC_ANALOG_MICB_1_EN,
 				0x40, (pdata->micbias1_cap_mode << 6));
@@ -4098,6 +4111,84 @@ int msm_anlg_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	return 0;
 }
 EXPORT_SYMBOL(msm_anlg_codec_info_create_codec_entry);
+
+#ifdef CONFIG_SND_SOC_DBMDX
+struct snd_soc_codec *platform_codec;
+/* Add analog codec mic bias1 control for voice wake up device  tangshouxing 11/04 */
+int enable_mic_bias(bool enable){
+
+	int ret = 0;
+	struct snd_soc_codec *codec = platform_codec;
+	struct sdm660_cdc_priv *sdm660_cdc =
+					snd_soc_codec_get_drvdata(codec);
+	struct on_demand_supply *supply;
+
+	supply = &sdm660_cdc->on_demand_list[0];
+
+	if (!supply->supply) {
+		dev_err(codec->dev, "%s: err mic_bias supply not present \n",
+			__func__);
+		return ret;
+	}
+
+	if (enable){
+		if (atomic_inc_return(&supply->ref) == 1) {
+			ret = regulator_set_voltage(supply->supply,
+						    supply->min_uv,
+						    supply->max_uv);
+			if (ret) {
+				dev_err(codec->dev,
+					"Setting regulator voltage(en) for micbias with err = %d\n",
+					ret);
+				return -EPERM;
+			}
+			ret = regulator_set_load(supply->supply,
+						 supply->optimum_ua);
+			if (ret < 0) {
+				dev_err(codec->dev,
+					"Setting regulator optimum mode(en) failed for micbias with err = %d\n",
+					ret);
+				return -EPERM;
+			}
+			ret = regulator_enable(supply->supply);
+		}
+		if (ret)
+			dev_err(codec->dev, "%s: Failed to enable mic bias1\n", __func__);
+
+		snd_soc_update_bits(platform_codec, MSM89XX_PMIC_ANALOG_MICB_1_EN, 0x80, 0x80);
+
+
+	}else{
+		if (atomic_read(&supply->ref) == 0) {
+			dev_dbg(codec->dev, "%s: mic bias1 supply has been disabled.\n", __func__);
+			return -EPERM;
+		}
+		if (atomic_dec_return(&supply->ref) == 0) {
+			ret = regulator_disable(supply->supply);
+			if (ret)
+				dev_err(codec->dev, "%s: Failed to disable mic bias1\n", __func__);
+			ret = regulator_set_voltage(supply->supply,
+						    0,
+						    supply->max_uv);
+			if (ret) {
+				dev_err(codec->dev,
+					"Setting regulator voltage(dis) failed for micbias with err = %d\n",
+					ret);
+				return -EPERM;
+			}
+			ret = regulator_set_load(supply->supply, 0);
+			if (ret < 0)
+				dev_err(codec->dev,
+					"Setting regulator optimum mode(dis) failed for micbias with err = %d\n",
+					ret);
+		}
+
+		snd_soc_update_bits(platform_codec, MSM89XX_PMIC_ANALOG_MICB_1_EN, 0x80, 0x00);
+      }
+
+    return 0;
+}
+#endif
 
 static int msm_anlg_cdc_soc_probe(struct snd_soc_codec *codec)
 {
@@ -4214,6 +4305,10 @@ static int msm_anlg_cdc_soc_probe(struct snd_soc_codec *codec)
 	snd_soc_dapm_ignore_suspend(dapm, "PDM Capture");
 
 	snd_soc_dapm_sync(dapm);
+
+#ifdef CONFIG_SND_SOC_DBMDX
+	platform_codec = codec;
+#endif
 
 	return 0;
 }

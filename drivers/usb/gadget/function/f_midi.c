@@ -2,6 +2,7 @@
  * f_midi.c -- USB MIDI class function driver
  *
  * Copyright (C) 2006 Thumtronics Pty Ltd.
+ * Copyright (C) 2018 XiaoMi, Inc.
  * Developed for Thumtronics by Grey Innovation
  * Ben Williamson <ben.williamson@greyinnovation.com>
  *
