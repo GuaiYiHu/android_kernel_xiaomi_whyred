@@ -104,7 +104,7 @@
 #define X86_FEATURE_EXTD_APICID	( 3*32+26) /* has extended APICID (8 bits) */
 #define X86_FEATURE_AMD_DCM     ( 3*32+27) /* multi-node processor */
 #define X86_FEATURE_APERFMPERF	( 3*32+28) /* APERFMPERF */
-#define X86_FEATURE_EAGER_FPU	( 3*32+29) /* "eagerfpu" Non lazy FPU restore */
+/* free, was #define X86_FEATURE_EAGER_FPU	( 3*32+29) * "eagerfpu" Non lazy FPU restore */
 #define X86_FEATURE_NONSTOP_TSC_S3 ( 3*32+30) /* TSC doesn't stop in S3 state */
 
 /* Intel-defined CPU features, CPUID level 0x00000001 (ecx), word 4 */
@@ -187,6 +187,7 @@
 #define X86_FEATURE_ARAT	( 7*32+ 1) /* Always Running APIC Timer */
 #define X86_FEATURE_CPB		( 7*32+ 2) /* AMD Core Performance Boost */
 #define X86_FEATURE_EPB		( 7*32+ 3) /* IA32_ENERGY_PERF_BIAS support */
+#define X86_FEATURE_INVPCID_SINGLE ( 7*32+ 4) /* Effectively INVPCID && CR4.PCIDE=1 */
 #define X86_FEATURE_PLN		( 7*32+ 5) /* Intel Power Limit Notification */
 #define X86_FEATURE_PTS		( 7*32+ 6) /* Intel Package Thermal Status */
 #define X86_FEATURE_DTHERM	( 7*32+ 7) /* Digital Thermal Sensor */
@@ -198,6 +199,12 @@
 #define X86_FEATURE_HWP_EPP	( 7*32+13) /* Intel HWP_EPP */
 #define X86_FEATURE_HWP_PKG_REQ ( 7*32+14) /* Intel HWP_PKG_REQ */
 #define X86_FEATURE_INTEL_PT	( 7*32+15) /* Intel Processor Trace */
+#define X86_FEATURE_RSB_CTXSW	( 7*32+19) /* Fill RSB on context switches */
+
+#define X86_FEATURE_RETPOLINE	( 7*32+29) /* Generic Retpoline mitigation for Spectre variant 2 */
+#define X86_FEATURE_RETPOLINE_AMD ( 7*32+30) /* AMD Retpoline mitigation for Spectre variant 2 */
+/* Because the ALTERNATIVE scheme is for members of the X86_FEATURE club... */
+#define X86_FEATURE_KAISER	( 7*32+31) /* CONFIG_PAGE_TABLE_ISOLATION w/o nokaiser */
 
 /* Virtualization flags: Linux defined, word 8 */
 #define X86_FEATURE_TPR_SHADOW  ( 8*32+ 0) /* Intel TPR Shadow */
@@ -273,6 +280,9 @@
 #define X86_BUG_FXSAVE_LEAK	X86_BUG(6) /* FXSAVE leaks FOP/FIP/FOP */
 #define X86_BUG_CLFLUSH_MONITOR	X86_BUG(7) /* AAI65, CLFLUSH required before MONITOR */
 #define X86_BUG_SYSRET_SS_ATTRS	X86_BUG(8) /* SYSRET doesn't fix up SS attrs */
+#define X86_BUG_CPU_MELTDOWN	X86_BUG(14) /* CPU is affected by meltdown attack and needs kernel page table isolation */
+#define X86_BUG_SPECTRE_V1	X86_BUG(15) /* CPU is affected by Spectre variant 1 attack with conditional branches */
+#define X86_BUG_SPECTRE_V2	X86_BUG(16) /* CPU is affected by Spectre variant 2 attack with indirect branches */
 
 #if defined(__KERNEL__) && !defined(__ASSEMBLY__)
 
@@ -355,59 +365,32 @@ extern const char * const x86_bug_flags[NBUGINTS*32];
 	set_bit(bit, (unsigned long *)cpu_caps_set);	\
 } while (0)
 
+#define setup_force_cpu_bug(bit) setup_force_cpu_cap(bit)
+
 #define cpu_has_fpu		boot_cpu_has(X86_FEATURE_FPU)
-#define cpu_has_de		boot_cpu_has(X86_FEATURE_DE)
 #define cpu_has_pse		boot_cpu_has(X86_FEATURE_PSE)
 #define cpu_has_tsc		boot_cpu_has(X86_FEATURE_TSC)
 #define cpu_has_pge		boot_cpu_has(X86_FEATURE_PGE)
 #define cpu_has_apic		boot_cpu_has(X86_FEATURE_APIC)
-#define cpu_has_sep		boot_cpu_has(X86_FEATURE_SEP)
-#define cpu_has_mtrr		boot_cpu_has(X86_FEATURE_MTRR)
-#define cpu_has_mmx		boot_cpu_has(X86_FEATURE_MMX)
 #define cpu_has_fxsr		boot_cpu_has(X86_FEATURE_FXSR)
 #define cpu_has_xmm		boot_cpu_has(X86_FEATURE_XMM)
 #define cpu_has_xmm2		boot_cpu_has(X86_FEATURE_XMM2)
-#define cpu_has_xmm3		boot_cpu_has(X86_FEATURE_XMM3)
-#define cpu_has_ssse3		boot_cpu_has(X86_FEATURE_SSSE3)
 #define cpu_has_aes		boot_cpu_has(X86_FEATURE_AES)
 #define cpu_has_avx		boot_cpu_has(X86_FEATURE_AVX)
 #define cpu_has_avx2		boot_cpu_has(X86_FEATURE_AVX2)
-#define cpu_has_ht		boot_cpu_has(X86_FEATURE_HT)
-#define cpu_has_nx		boot_cpu_has(X86_FEATURE_NX)
-#define cpu_has_xstore		boot_cpu_has(X86_FEATURE_XSTORE)
-#define cpu_has_xstore_enabled	boot_cpu_has(X86_FEATURE_XSTORE_EN)
-#define cpu_has_xcrypt		boot_cpu_has(X86_FEATURE_XCRYPT)
-#define cpu_has_xcrypt_enabled	boot_cpu_has(X86_FEATURE_XCRYPT_EN)
-#define cpu_has_ace2		boot_cpu_has(X86_FEATURE_ACE2)
-#define cpu_has_ace2_enabled	boot_cpu_has(X86_FEATURE_ACE2_EN)
-#define cpu_has_phe		boot_cpu_has(X86_FEATURE_PHE)
-#define cpu_has_phe_enabled	boot_cpu_has(X86_FEATURE_PHE_EN)
-#define cpu_has_pmm		boot_cpu_has(X86_FEATURE_PMM)
-#define cpu_has_pmm_enabled	boot_cpu_has(X86_FEATURE_PMM_EN)
-#define cpu_has_ds		boot_cpu_has(X86_FEATURE_DS)
-#define cpu_has_pebs		boot_cpu_has(X86_FEATURE_PEBS)
 #define cpu_has_clflush		boot_cpu_has(X86_FEATURE_CLFLUSH)
-#define cpu_has_bts		boot_cpu_has(X86_FEATURE_BTS)
 #define cpu_has_gbpages		boot_cpu_has(X86_FEATURE_GBPAGES)
 #define cpu_has_arch_perfmon	boot_cpu_has(X86_FEATURE_ARCH_PERFMON)
 #define cpu_has_pat		boot_cpu_has(X86_FEATURE_PAT)
-#define cpu_has_xmm4_1		boot_cpu_has(X86_FEATURE_XMM4_1)
-#define cpu_has_xmm4_2		boot_cpu_has(X86_FEATURE_XMM4_2)
 #define cpu_has_x2apic		boot_cpu_has(X86_FEATURE_X2APIC)
 #define cpu_has_xsave		boot_cpu_has(X86_FEATURE_XSAVE)
-#define cpu_has_xsaveopt	boot_cpu_has(X86_FEATURE_XSAVEOPT)
 #define cpu_has_xsaves		boot_cpu_has(X86_FEATURE_XSAVES)
 #define cpu_has_osxsave		boot_cpu_has(X86_FEATURE_OSXSAVE)
 #define cpu_has_hypervisor	boot_cpu_has(X86_FEATURE_HYPERVISOR)
-#define cpu_has_pclmulqdq	boot_cpu_has(X86_FEATURE_PCLMULQDQ)
-#define cpu_has_perfctr_core	boot_cpu_has(X86_FEATURE_PERFCTR_CORE)
-#define cpu_has_perfctr_nb	boot_cpu_has(X86_FEATURE_PERFCTR_NB)
-#define cpu_has_perfctr_l2	boot_cpu_has(X86_FEATURE_PERFCTR_L2)
-#define cpu_has_cx8		boot_cpu_has(X86_FEATURE_CX8)
-#define cpu_has_cx16		boot_cpu_has(X86_FEATURE_CX16)
-#define cpu_has_eager_fpu	boot_cpu_has(X86_FEATURE_EAGER_FPU)
-#define cpu_has_topoext		boot_cpu_has(X86_FEATURE_TOPOEXT)
-#define cpu_has_bpext		boot_cpu_has(X86_FEATURE_BPEXT)
+/*
+ * Do not add any more of those clumsy macros - use static_cpu_has_safe() for
+ * fast paths and boot_cpu_has() otherwise!
+ */
 
 #if __GNUC__ >= 4
 extern void warn_pre_alternatives(void);
