@@ -770,6 +770,11 @@ static int __wlan_hdd_bus_suspend_noirq(void)
 		return err;
 	}
 
+	if (hdd_ctx->driver_status == DRIVER_MODULES_OPENED) {
+		hdd_err("Driver open state,  can't suspend");
+		return -EAGAIN;
+	}
+
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
 		hdd_debug("Driver Module closed return success");
 		return 0;
@@ -849,6 +854,11 @@ static int __wlan_hdd_bus_resume(void)
 	if (status) {
 		hdd_err("Invalid hdd context");
 		return status;
+	}
+
+	if (hdd_ctx->driver_status == DRIVER_MODULES_OPENED) {
+		hdd_err("Driver open state,  can't suspend");
+		return -EAGAIN;
 	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
@@ -1372,8 +1382,6 @@ static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
 {
 	switch (uevent->uevent) {
 	case PLD_FW_DOWN:
-		cds_set_target_ready(false);
-		break;
 	case PLD_RECOVERY:
 		cds_set_target_ready(false);
 		cds_set_recovery_in_progress(true);
@@ -1394,6 +1402,7 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 				struct pld_uevent_data *uevent)
 {
 	enum cds_driver_state driver_state;
+	hdd_context_t *hdd_ctx;
 
 	ENTER();
 
@@ -1408,6 +1417,13 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 		goto uevent_not_allowed;
 	}
 
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL return");
+		return;
+	}
+
 	wlan_hdd_set_the_pld_uevent(uevent);
 
 	mutex_lock(&hdd_init_deinit_lock);
@@ -1419,6 +1435,9 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 		break;
 	case PLD_FW_DOWN:
 		hdd_cleanup_on_fw_down();
+		if (pld_is_fw_rejuvenate() &&
+		    hdd_ipa_is_enabled(hdd_ctx))
+			hdd_ipa_fw_rejuvenate_send_msg(hdd_ctx);
 		break;
 	}
 	mutex_unlock(&hdd_init_deinit_lock);

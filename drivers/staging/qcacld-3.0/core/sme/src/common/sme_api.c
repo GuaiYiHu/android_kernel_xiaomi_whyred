@@ -1674,6 +1674,7 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 		msg->add_bssdescr_cb = csr_scan_process_single_bssdescr;
 		msg->csr_roam_synch_cb = csr_roam_synch_callback;
 		msg->sme_msg_cb = sme_process_msg_callback;
+		msg->stop_roaming_cb = sme_stop_roaming;
 
 		if (eSIR_FAILURE != u_mac_post_ctrl_msg(hHal, (tSirMbMsg *)
 							msg))
@@ -9320,7 +9321,8 @@ QDF_STATUS sme_stop_roaming(tHalHandle hal, uint8_t session_id, uint8_t reason)
 	 * is not enabled on this session so that roam start requests for
 	 * this session can be blocked until driver enables roaming
 	 */
-	if (reason == eCsrDriverDisabled && session->pCurRoamProfile) {
+	if (reason == eCsrDriverDisabled && session->pCurRoamProfile &&
+	    session->pCurRoamProfile->csrPersona == QDF_STA_MODE) {
 		session->pCurRoamProfile->driver_disabled_roaming = true;
 		sme_debug("driver_disabled_roaming set for session %d",
 			  session_id);
@@ -17632,6 +17634,18 @@ QDF_STATUS sme_set_sar_power_limits(tHalHandle hal,
 	}
 
 	return wma_set_sar_limit(wma_handle, sar_limit_cmd);
+}
+
+QDF_STATUS sme_send_coex_config_cmd(struct coex_config_params *coex_cfg_params)
+{
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		sme_err("wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return wma_send_coex_config_cmd(wma_handle, coex_cfg_params);
 }
 
 #ifdef WLAN_FEATURE_DISA

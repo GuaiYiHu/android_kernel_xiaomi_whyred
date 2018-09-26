@@ -751,6 +751,23 @@ bool cds_is_any_nondfs_chnl_present(uint8_t *channel);
 bool cds_is_any_dfs_beaconing_session_present(uint8_t *channel);
 bool cds_allow_concurrency(enum cds_con_mode mode,
 				uint8_t channel, enum hw_mode_bandwidth bw);
+/**
+ * cds_is_concurrency_allowed() - Check for allowed
+ * concurrency combination
+ * @mode: new connection mode
+ * @channel: channel on which new connection is coming up
+ * @bw: Bandwidth requested by the connection (optional)
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * allowed or not based on the HW capability, but no need to
+ * invoke get_pcl
+ *
+ * Return: True/False
+ */
+bool cds_is_concurrency_allowed(enum cds_con_mode mode,
+				       uint8_t channel,
+				       enum hw_mode_bandwidth bw);
 
 /**
  * cds_check_privacy_with_concurrency() - privacy/concurrency checker
@@ -1001,15 +1018,19 @@ bool cds_is_safe_channel(uint8_t channel);
  */
 bool cds_disallow_mcc(uint8_t channel);
 /**
- * cds_get_alternate_channel_for_sap() - checks if any alternate channel can
+ * cds_get_diff_band_ch_for_sap() - checks if any alternate channel can
  * be obtained from PCL if current channel can't be allowed
  *
- * This function checks if any alternate channel can be obtained
- * from PCL or other means if current channel for SAP can't be allowed
+ * @channel: Present STA channel
+ *
+ * This API will get the PCl chanel list based upon the current connections
+ * and will return the different band channel to operate in DBS mode if enabled
+ * It may happen that STA+SAP SCC is not allowed, so we have to select a random
+ * preferred channel in different band than the STA channel.
  *
  * Return: New channel
  */
-uint8_t cds_get_alternate_channel_for_sap(void);
+uint8_t cds_get_diff_band_ch_for_sap(uint8_t channel);
 
 /**
  * cds_set_cur_conc_system_pref() - set the value of cur_conc_system_pref
