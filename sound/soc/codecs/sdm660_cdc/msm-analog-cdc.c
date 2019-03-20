@@ -90,7 +90,6 @@ static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 25, 1);
 static struct snd_soc_dai_driver msm_anlg_cdc_i2s_dai[];
 /* By default enable the internal speaker boost */
 static bool spkr_boost_en = true;
-bool hs_record_active = false;
 
 static char on_demand_supply_name[][MAX_ON_DEMAND_SUPPLY_NAME_LENGTH] = {
 	"cdc-vdd-mic-bias",
@@ -2582,8 +2581,6 @@ static int msm_anlg_cdc_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		if (strnstr(w->name, external2_text, strlen(w->name)))
-				hs_record_active = true;
 		if (get_codec_version(sdm660_cdc) <= TOMBAK_2_0)
 			/*
 			 * Wait for 20ms post micbias enable
@@ -2604,8 +2601,6 @@ static int msm_anlg_cdc_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (strnstr(w->name, external2_text, strlen(w->name)))
-			   hs_record_active = false;
 		if (strnstr(w->name, internal1_text, strlen(w->name))) {
 			snd_soc_update_bits(codec, micb_int_reg, 0xC0, 0x40);
 		} else if (strnstr(w->name, internal2_text, strlen(w->name))) {
@@ -3348,7 +3343,7 @@ static int msm_anlg_cdc_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	struct sdm660_cdc_priv *sdm660_cdc =
 					snd_soc_codec_get_drvdata(codec);
-	pr_info("msm_anlg_cdc_codec_enable_ear_pa event = %d\n", event);
+
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		dev_dbg(codec->dev,
