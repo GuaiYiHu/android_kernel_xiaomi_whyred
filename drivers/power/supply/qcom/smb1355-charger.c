@@ -33,8 +33,8 @@
 
 
 
-#undef pr_info
-#define pr_info pr_err
+
+
 
 /* SMB1355 registers, different than mentioned in smb-reg.h */
 
@@ -169,6 +169,7 @@ struct smb_irq_info {
 };
 
 struct smb_iio {
+	struct iio_channel	*temp_chan;
 	struct iio_channel	*temp_max_chan;
 };
 
@@ -539,6 +540,23 @@ static int smb1355_get_prop_connector_health(struct smb1355 *chip)
 
 	return POWER_SUPPLY_HEALTH_COOL;
 }
+static int smb1355_get_prop_charger_temp(struct smb1355 *chip,
+				union power_supply_propval *val)
+{
+	int rc;
+
+	if (!chip->iio.temp_chan ||
+		PTR_ERR(chip->iio.temp_chan) == -EPROBE_DEFER)
+		chip->iio.temp_chan = iio_channel_get(chip->dev,
+						"charger_temp");
+
+	if (IS_ERR(chip->iio.temp_chan))
+		return PTR_ERR(chip->iio.temp_chan);
+
+	rc = iio_read_channel_processed(chip->iio.temp_chan, &val->intval);
+	val->intval /= 100;
+	return rc;
+}
 
 static int smb1355_get_prop_charger_temp_max(struct smb1355 *chip,
 				union power_supply_propval *val)
@@ -583,7 +601,7 @@ static int smb1355_parallel_get_prop(struct power_supply *psy,
 		pr_debug("POWER_SUPPLY_PROP_PIN_ENABLED=%d \n", val->intval);
 		break;
 	case POWER_SUPPLY_PROP_CHARGER_TEMP:
-		val->intval = chip->die_temp_deciDegC;
+		rc = smb1355_get_prop_charger_temp(chip, val);
 		pr_debug("POWER_SUPPLY_PROP_CHARGER_TEMP=%d \n", val->intval);
 		break;
 	case POWER_SUPPLY_PROP_CHARGER_TEMP_MAX:
