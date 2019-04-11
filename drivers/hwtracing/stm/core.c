@@ -864,9 +864,15 @@ static int __stm_source_link_drop(struct stm_source_device *src,
 {
 	struct stm_device *link;
 	int ret = 0;
+<<<<<<< HEAD
 
 	lockdep_assert_held(&stm->link_mutex);
 
+=======
+
+	lockdep_assert_held(&stm->link_mutex);
+
+>>>>>>> 07797f0ce78953f8527f708fbf79857d3f3ed479
 	/* for stm::link_list modification, we hold both mutex and spinlock */
 	spin_lock(&stm->link_lock);
 	spin_lock(&src->link_lock);
@@ -892,6 +898,7 @@ unlock:
 	spin_unlock(&src->link_lock);
 	spin_unlock(&stm->link_lock);
 
+<<<<<<< HEAD
 	/*
 	 * Call the unlink callbacks for both source and stm, when we know
 	 * that we have actually performed the unlinking.
@@ -904,6 +911,10 @@ unlock:
 			stm->data->unlink(stm->data, src->output.master,
 					  src->output.channel);
 	}
+=======
+	if (!ret && src->data->unlink)
+		src->data->unlink(src->data);
+>>>>>>> 07797f0ce78953f8527f708fbf79857d3f3ed479
 
 	return ret;
 }
