@@ -660,7 +660,7 @@ struct adm_cmd_set_pp_params {
 #define ADM_CMD_GET_MTMX_STRTR_DEV_PARAMS_V1	0x00010368
 #define ADM_CMDRSP_GET_MTMX_STRTR_DEV_PARAMS_V1	0x00010369
 
-/* Payload of the #define ADM_CMD_SET_MTMX_STRTR_DEV_PARAMS_V1 command.
+/* Payload of the #defineï¿½ADM_CMD_SET_MTMX_STRTR_DEV_PARAMS_V1 command.
  * If the data_payload_addr_lsw and data_payload_addr_msw element
  * are NULL, a series of struct param_hdr_v3 structures immediately
  * follows, whose total size is payload_size bytes.
@@ -10626,7 +10626,7 @@ struct afe_clk_set {
 	 * for enable and disable clock.
 	 *	"clk_freq_in_hz", "clk_attri", and "clk_root"
 	 *	are ignored in disable clock case.
-	 *	@values 
+	 *	@valuesï¿½
 	 *	- 0 -- Disabled
 	 *	- 1 -- Enabled  @tablebulletend
 	 */
