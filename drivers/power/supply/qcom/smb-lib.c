@@ -2674,10 +2674,10 @@ int smblib_get_prop_die_health(struct smb_charger *chg,
 
 #define SDP_CURRENT_UA			500000
 #define CDP_CURRENT_UA			1500000
-#define DCP_CURRENT_UA			2000000
-#define HVDCP2_CURRENT_UA		1500000
+#define DCP_CURRENT_UA			2500000
+#define HVDCP2_CURRENT_UA		2900000
 #if defined(CONFIG_KERNEL_CUSTOM_E7S)
-#define HVDCP_CURRENT_UA		2000000
+#define HVDCP_CURRENT_UA		2900000
 #else
 #define HVDCP_CURRENT_UA		2900000
 #endif
