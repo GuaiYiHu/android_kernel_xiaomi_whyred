@@ -32,6 +32,10 @@ extern int hwc_check_global;
 #define LCT_JEITA_CCC_AUTO_ADJUST  1
 #endif
 
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
+
 #define smblib_err(chg, fmt, ...)		\
 	pr_err("%s: %s: " fmt, chg->name,	\
 		__func__, ##__VA_ARGS__)	\
@@ -885,12 +889,21 @@ static int smblib_get_pulse_cnt(struct smb_charger *chg, int *count)
 #define USBIN_150MA	150000
 #define USBIN_500MA	500000
 #define USBIN_900MA	900000
+#define USBIN_1800MA    1800000
+#define USBIN_2900MA    2900000
 
 static int set_sdp_current(struct smb_charger *chg, int icl_ua)
 {
 	int rc;
 	u8 icl_options;
 	const struct apsd_result *apsd_result = smblib_get_apsd_result(chg);
+
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	if (force_fast_charge > 0 && icl_ua == USBIN_1800MA)
+	{
+		icl_ua = USBIN_2900MA;
+	}
+#endif
 
 	/* power source is SDP */
 	switch (icl_ua) {
@@ -2674,10 +2687,10 @@ int smblib_get_prop_die_health(struct smb_charger *chg,
 
 #define SDP_CURRENT_UA			500000
 #define CDP_CURRENT_UA			1500000
-#define DCP_CURRENT_UA			2500000
-#define HVDCP2_CURRENT_UA		2900000
+#define DCP_CURRENT_UA			2000000
+#define HVDCP2_CURRENT_UA		1500000
 #if defined(CONFIG_KERNEL_CUSTOM_E7S)
-#define HVDCP_CURRENT_UA		2900000
+#define HVDCP_CURRENT_UA		2000000
 #else
 #define HVDCP_CURRENT_UA		2900000
 #endif
