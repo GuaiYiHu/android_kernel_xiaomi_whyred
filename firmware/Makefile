@@ -136,10 +136,6 @@ fw-shipped-$(CONFIG_USB_VICAM) += vicam/firmware.fw
 fw-shipped-$(CONFIG_VIDEO_CPIA2) += cpia2/stv0672_vp4.bin
 fw-shipped-$(CONFIG_YAM) += yam/1200.bin yam/9600.bin
 
-# HMI_L8867_A01
-fw-shipped-$(CONFIG_TOUCHSCREEN_NVT_D2S) += novatek/tianma_nt36672_miui_d2s.bin
-fw-shipped-$(CONFIG_TOUCHSCREEN_NVT_D2S) += novatek/jdi_nt36672_miui_d2s.bin
-
 # HMI_L6653_A01
 fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_E7S_FW_UPDATE) += synaptics/tianma_td4310_miui_e7s.img
 fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_E7S_FW_UPDATE) += synaptics/shenchao_td4310_miui_e7s.img

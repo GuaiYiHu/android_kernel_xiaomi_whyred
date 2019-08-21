@@ -41,9 +41,6 @@ char g_lcd_id[128];
 struct mdss_dsi_ctrl_pdata *ctrl_pdata_whitepoint;
 EXPORT_SYMBOL(g_lcd_id);
 
-#ifdef CONFIG_KERNEL_DRIVER_D2S_CN
-extern bool enable_gesture_mode;
-#endif
 #ifdef CONFIG_KERNEL_CUSTOM_E7S
 extern bool enable_gesture_mode;
 extern bool synaptics_gesture_func_on;
@@ -560,11 +557,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			gpio_set_value((ctrl_pdata->disp_en_gpio), 0);
 			gpio_free(ctrl_pdata->disp_en_gpio);
 		}
-#if defined(CONFIG_KERNEL_DRIVER_D2S_CN)
-		if(enable_gesture_mode) {
-			printk("gesture mode keep reset gpio to high.\n");
-		}
-#elif defined(CONFIG_KERNEL_CUSTOM_E7S)
+#if defined(CONFIG_KERNEL_CUSTOM_E7S)
 		if(enable_gesture_mode || synaptics_gesture_func_on)
 			printk("gesture mode keep reset gpio to high.\n");
 		else

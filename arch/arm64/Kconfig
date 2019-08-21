@@ -225,12 +225,6 @@ config THERMAL_SWITCH
 	    help
 	            Support themral config switch.
 
-config KERNEL_CUSTOM_D2S
-    default n
-        bool "Custom for hardware D2S_pcb"
-	    help
-	            Custom for D2S_pcb.
-
 config KERNEL_CUSTOM_E7S
     default n
         bool "Custom for hardware E7S_pcb"

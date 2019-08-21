@@ -116,20 +116,7 @@ static struct step_chg_cfg step_chg_config = {
  * range data must be in increasing ranges and shouldn't overlap.
  * Gaps are okay
  */
-#if defined(CONFIG_KERNEL_CUSTOM_D2S)
-static struct jeita_fcc_cfg jeita_fcc_config = {
-	.psy_prop	= POWER_SUPPLY_PROP_TEMP,
-	.prop_name	= "BATT_TEMP",
-	.hysteresis	= 0, /* 1degC hysteresis */
-	.fcc_cfg	= {
-		/* TEMP_LOW	TEMP_HIGH	FCC */
-		{0,		50,		300000},
-		{51,		150,		900000},
-		{151,	450,		2900000},
-		{451,	600,		1500000},
-	},
-};
-#elif defined(CONFIG_KERNEL_CUSTOM_E7S)
+#if defined(CONFIG_KERNEL_CUSTOM_E7S)
 static struct jeita_fcc_cfg jeita_fcc_config = {
 	.psy_prop	= POWER_SUPPLY_PROP_TEMP,
 	.prop_name	= "BATT_TEMP",
@@ -280,13 +267,6 @@ reschedule:
 	return (STEP_CHG_HYSTERISIS_DELAY_US - elapsed_us + 1000);
 }
 
-#if defined(CONFIG_KERNEL_CUSTOM_D2S)
-extern union power_supply_propval lct_therm_lvl_reserved;
-extern int LctIsInVideo;
-extern int hwc_check_india;
-union power_supply_propval lct_therm_video_level = {6,};
-#endif
-
 static int handle_jeita(struct step_chg_info *chip)
 {
 	union power_supply_propval pval = {0, };
@@ -294,18 +274,6 @@ static int handle_jeita(struct step_chg_info *chip)
 	u64 elapsed_us;
 	int temp = 1;
 
-#if defined(CONFIG_KERNEL_CUSTOM_D2S)
-	if (hwc_check_india) {
-		pr_err("lct video LctIsInVideo=%d, lct_therm_lvl_reserved=%d\n",
-					LctIsInVideo, lct_therm_lvl_reserved.intval);
-	    if (LctIsInVideo== 1)
-			rc = power_supply_set_property(chip->batt_psy,
-			POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL, &lct_therm_video_level);
-		else
-			rc = power_supply_set_property(chip->batt_psy,
-			POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL, &lct_therm_lvl_reserved);
-	}
-#endif
 	rc = power_supply_get_property(chip->batt_psy,
 		POWER_SUPPLY_PROP_SW_JEITA_ENABLED, &pval);
 	if (rc < 0)

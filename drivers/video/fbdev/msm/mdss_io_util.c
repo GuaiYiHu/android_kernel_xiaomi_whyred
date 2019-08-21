@@ -18,9 +18,6 @@
 #include <linux/delay.h>
 #include <linux/mdss_io_util.h>
 
-#ifdef CONFIG_KERNEL_DRIVER_D2S_CN
-extern bool enable_gesture_mode;
-#endif
 #ifdef CONFIG_KERNEL_CUSTOM_E7S
 extern bool enable_gesture_mode;
 extern bool synaptics_gesture_func_on;
@@ -227,17 +224,6 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 	bool need_sleep;
 	if (enable) {
 		for (i = 0; i < num_vreg; i++) {
-#ifdef CONFIG_KERNEL_DRIVER_D2S_CN
-			/* vddio lab ibb continus supply */
-			if(enable_gesture_mode) {
-				if( (strcmp(in_vreg[i].vreg_name,"lab")==0) ||
-						(strcmp(in_vreg[i].vreg_name,"ibb")==0) ||
-						(strcmp(in_vreg[i].vreg_name,"wqhd-vddio")==0) ) {
-					printk(KERN_ERR "[LCD][TP][Gesture][resume] '%s' power continus supply\n",in_vreg[i].vreg_name);
-					continue;
-				}
-			}
-#endif
 #ifdef CONFIG_KERNEL_CUSTOM_E7S
 			/* vddio lab ibb continus supply */
 			if(enable_gesture_mode || synaptics_gesture_func_on) {
@@ -288,17 +274,6 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 						continue;
 				}
 			}
-#ifdef CONFIG_KERNEL_DRIVER_D2S_CN
-			/* vddio lab ibb continus supply */
-			if(enable_gesture_mode) {
-				if( (strcmp(in_vreg[i].vreg_name,"lab")==0) ||
-						(strcmp(in_vreg[i].vreg_name,"ibb")==0) ||
-						(strcmp(in_vreg[i].vreg_name,"wqhd-vddio")==0) ) {
-					printk(KERN_ERR "[LCD][TP][Gesture][suspend] '%s' power continus supply\n",in_vreg[i].vreg_name);
-					continue;
-				}
-			}
-#endif
 #ifdef CONFIG_KERNEL_CUSTOM_E7S
 			/* vddio lab ibb continus supply */
 			if(enable_gesture_mode || synaptics_gesture_func_on) {

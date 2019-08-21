@@ -90,36 +90,9 @@ static ssize_t ant_state_show(struct class *class,
 	pr_err("Macle ant_state_show state = %d, custome_state=%d\n", global_ant_info->ant_check_state, state);
 	return sprintf(buf, "%d\n", state);
 }
-#if defined(CONFIG_KERNEL_DRIVER_D2S_CN)
-static ssize_t ant_state_store(struct class *class,
-				struct class_attribute *attr, 
-					const char *buf,size_t size)
-{	
-	int rc =0;
-	int state = 0;
-	rc = kstrtoint(buf, 10, &state);
-	if (rc) {
-		pr_err("Macle kstrtoint failed.rc = %d\n", rc);
-		return rc;
-	}
-	if (state == 0) {
-		disable_irq(global_ant_info->irq);
-		printk("property disable ant_irq");
-	}else{
-		enable_irq(global_ant_info->irq);
-		printk("property enable ant_irq");
-	}
-	return size;
-}
-#endif
 
-#if defined(CONFIG_KERNEL_DRIVER_D2S_CN)
-static struct class_attribute ant_state =
-	__ATTR(ant_state, S_IRUGO, ant_state_show, ant_state_store);
-#else
 static struct class_attribute ant_state =
 	__ATTR(ant_state, S_IRUGO, ant_state_show, NULL);
-#endif
 
 static int ant_register_class_dev(struct ant_check_info *ant_info){
 	int err;
@@ -203,24 +176,15 @@ static int ant_probe(struct platform_device *pdev)
 
 		ant_info->irq = gpio_to_irq(ant_info->irq_gpio);
 		pr_err("Macle irq = %d\n", ant_info->irq);
-#if defined(CONFIG_KERNEL_DRIVER_D2S_CN)
-		rc = request_irq(ant_info->irq,
-#else		
 		rc = devm_request_threaded_irq(&pdev->dev, ant_info->irq, NULL,
-#endif
 			ant_interrupt,
 			IRQF_TRIGGER_RISING|IRQF_TRIGGER_FALLING|IRQF_ONESHOT, "ant-switch-irq", ant_info);
 		if (rc < 0) {
 			pr_err("ant_probe: request_irq fail rc=%d\n", rc);
 			goto err_irq;
 		}
-#if defined(CONFIG_KERNEL_DRIVER_D2S_CN)
-		printk("D2S CN disable ant irq");
-		disable_irq(ant_info->irq);
-#else
 		device_init_wakeup(&pdev->dev, true);
 		irq_set_irq_wake(ant_info->irq,1);
-#endif		
 	}else{
 		pr_err("Macle irq gpio not provided\n");
 	        goto free_input_device;
@@ -232,12 +196,8 @@ static int ant_probe(struct platform_device *pdev)
 	   global_ant_info = ant_info;
        return 0;
 err_irq:
-#if defined(CONFIG_KERNEL_DRIVER_D2S_CN)
-	disable_irq(ant_info->irq);
-#else
 	disable_irq_wake(ant_info->irq);
 	device_init_wakeup(&pdev->dev, 0);
-#endif
 	gpio_free(ant_info->irq_gpio);
 
 free_input_device:
@@ -258,12 +218,8 @@ static int ant_remove(struct platform_device *pdev)
 	class_destroy(ant->ant_sys_class);
 #endif
 	pr_err("ant_remove\n");
-#if defined(CONFIG_KERNEL_DRIVER_D2S_CN)
-	disable_irq(ant->irq);
-#else
 	disable_irq_wake(ant->irq);
 	device_init_wakeup(&pdev->dev, 0);
-#endif
 	free_irq(ant->irq, ant->ipdev);
 	gpio_free(ant->irq_gpio);
 	input_unregister_device(ant->ipdev);

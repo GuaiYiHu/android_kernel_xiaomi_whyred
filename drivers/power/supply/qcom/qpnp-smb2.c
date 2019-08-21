@@ -36,7 +36,7 @@
 
 union power_supply_propval lct_therm_lvl_reserved;
 union power_supply_propval lct_therm_level;
-#if defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_E7S)
+#if defined(CONFIG_KERNEL_CUSTOM_E7S)
 union power_supply_propval lct_therm_call_level = {4,};
 #else
 union power_supply_propval lct_therm_call_level = {3,};
@@ -51,9 +51,6 @@ union power_supply_propval lct_therm_india_level = {1,};
 
 bool lct_backlight_off;
 int LctIsInCall = 0;
-#if defined(CONFIG_KERNEL_CUSTOM_D2S)
-int LctIsInVideo = 0; 
-#endif
 int LctThermal =0;
 extern int hwc_check_india;
 extern int hwc_check_global;
@@ -2406,29 +2403,6 @@ static void smb2_create_debugfs(struct smb2 *chip)
 #endif
 
 #ifdef THERMAL_CONFIG_FB
-#if defined(CONFIG_KERNEL_CUSTOM_D2S)
-static ssize_t lct_thermal_video_status_show(struct device *dev,
-					struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", LctIsInVideo);
-}
-static ssize_t lct_thermal_video_status_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int retval;
-	unsigned int input;
-
-	if (sscanf(buf, "%u", &input) != 1)
-		retval = -EINVAL;
-	else
-	        LctIsInVideo = input;
-
-	pr_err("LctIsInVideo = %d\n", LctIsInVideo);
-
-	return retval;
-}
-#endif
-
 static ssize_t lct_thermal_call_status_show(struct device *dev,
 					struct device_attribute *attr, char *buf)
 {
@@ -2452,10 +2426,6 @@ static ssize_t lct_thermal_call_status_store(struct device *dev,
 static struct device_attribute attrs2[] = {
 	__ATTR(thermalcall, S_IRUGO | S_IWUSR,
 			lct_thermal_call_status_show, lct_thermal_call_status_store),
-#if defined(CONFIG_KERNEL_CUSTOM_D2S)
-	__ATTR(thermalvideo, S_IRUGO | S_IWUSR,
-			lct_thermal_video_status_show, lct_thermal_video_status_store),
-#endif
 };
 	
 static void thermal_fb_notifier_resume_work(struct work_struct *work)
@@ -2478,19 +2448,6 @@ static void thermal_fb_notifier_resume_work(struct work_struct *work)
 			else
 				smblib_set_prop_system_temp_level(chg,&lct_therm_lvl_reserved);
 		}
-	}
-	else if (LctIsInCall == 1)
-		smblib_set_prop_system_temp_level(chg,&lct_therm_call_level);
-	else
-		smblib_set_prop_system_temp_level(chg,&lct_therm_lvl_reserved);
-	LctThermal = 0;
-#elif defined(CONFIG_KERNEL_CUSTOM_D2S)
-	if ((lct_backlight_off) && (LctIsInCall == 0) )
-	{
-		if (lct_therm_lvl_reserved.intval >= 2)
-			smblib_set_prop_system_temp_level(chg,&lct_therm_globe_level);
-		else
-			smblib_set_prop_system_temp_level(chg,&lct_therm_level);
 	}
 	else if (LctIsInCall == 1)
 		smblib_set_prop_system_temp_level(chg,&lct_therm_call_level);
