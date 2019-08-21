@@ -2274,16 +2274,6 @@ static void qpnp_hap_td_enable(struct timed_output_dev *dev, int time_ms)
 	if (time_ms < 10)
 		time_ms = 10;
 
-
-
-#ifdef CONFIG_KERNEL_CUSTOM_F7A
-
-    pr_info("zjl hasfasda F7A haptic  =%d\n",time_ms);
-
- 	vmax_mv = hap->vmax_mv;
-	qpnp_hap_vmax_config(hap, vmax_mv, false);
-#else
-
 #ifdef CONFIG_KERNEL_CUSTOM_E7S
 
     pr_info("zjl hasfasda E7S haptic  =%d\n",time_ms);
@@ -2358,7 +2348,6 @@ static void qpnp_hap_td_enable(struct timed_output_dev *dev, int time_ms)
     pr_info("zjl jjjjjj   haptic  =%d\n",time_ms);
 	if (is_sw_lra_auto_resonance_control(hap))
 		hrtimer_cancel(&hap->auto_res_err_poll_timer);
-#endif
 #endif
 #endif
 
