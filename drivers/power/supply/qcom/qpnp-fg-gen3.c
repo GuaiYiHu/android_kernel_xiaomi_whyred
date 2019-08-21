@@ -412,7 +412,7 @@ static bool fg_sram_dump;
  int hwc_check_india;
  int hwc_check_global;
 extern bool is_poweroff_charge;
-#if defined(CONFIG_KERNEL_CUSTOM_E7T) || defined (CONFIG_KERNEL_CUSTOM_D2S)
+#if defined (CONFIG_KERNEL_CUSTOM_D2S)
 extern int rradc_die;
 #endif
 /* All getters HERE */
@@ -645,44 +645,23 @@ static int fg_get_battery_temp(struct fg_chip *chip, int *val)
 {
 	int rc = 0, temp;
 	u8 buf[2];
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	struct thermal_zone_device *quiet_them;
-#endif
+
 	rc = fg_read(chip, BATT_INFO_BATT_TEMP_LSB(chip), buf, 2);
 	if (rc < 0) {
 		pr_err("failed to read addr=0x%04x, rc=%d\n",
 			BATT_INFO_BATT_TEMP_LSB(chip), rc);
 		return rc;
 	}
-		pr_err("addr=0x%04x,buf1=%04x buf0=%04x\n",
-			BATT_INFO_BATT_TEMP_LSB(chip),buf[1],buf[0]);
+
 	temp = ((buf[1] & BATT_TEMP_MSB_MASK) << 8) |
 		(buf[0] & BATT_TEMP_LSB_MASK);
 	temp = DIV_ROUND_CLOSEST(temp, 4);
 
 	/* Value is in Kelvin; Convert it to deciDegC */
 	temp = (temp - 273) * 10;
-		pr_err("LCT TEMP=%d\n",temp);
 
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)	
-	if (temp < -40){
-		switch (temp){
-		case -50:
-			temp = -70;
-			break;
-		case -60:
-			temp = -80;
-			break;
-		case -70:
-			temp = -90;
-			break;
-		case -80:
-			temp = -100;
-			break;
-#else
 	if (temp < -80){
 		switch (temp){
-#endif
 		case -90:
 			temp = -110;
 			break;
@@ -713,15 +692,6 @@ static int fg_get_battery_temp(struct fg_chip *chip, int *val)
 		};
 	}
 
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	if(rradc_die == 1){
-		quiet_them = thermal_zone_get_zone_by_name("quiet_therm");
-		if (quiet_them)
-			rc = thermal_zone_get_temp(quiet_them, &temp);
-		temp = (temp - 3) * 10;
-		pr_err("LCT USE QUIET_THERM AS BATTERY TEMP \n");
-	}
-#endif
 	*val = temp;
 	return 0;
 }
@@ -1132,15 +1102,6 @@ static int fg_get_batt_profile(struct fg_chip *chip)
 	}else{
 	rc = of_property_read_u32(profile_node, "qcom,fastchg-current-ma",
 			&chip->bp.fastchg_curr_ma);
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	if (is_poweroff_charge == true)
-	{
-		if(hwc_check_india == 1)
-			chip->bp.fastchg_curr_ma = 2200;
-		else
-			chip->bp.fastchg_curr_ma = 2300;
-	}
-#endif
 	if (rc < 0) {
 		pr_err("battery fastchg current unavailable, rc:%d\n", rc);
 		chip->bp.fastchg_curr_ma = -EINVAL;
@@ -1158,7 +1119,6 @@ static int fg_get_batt_profile(struct fg_chip *chip)
 		pr_err("No profile data available\n");
 		return -ENODATA;
 	}
-
 
 	rc = of_property_read_u32(profile_node, "qcom,battery-full-design", &chip->battery_full_design);
 	if (rc < 0) {
@@ -2285,11 +2245,6 @@ static int fg_adjust_recharge_voltage(struct fg_chip *chip)
 		recharge_volt_mv = 4050;
 	if (chip->health == POWER_SUPPLY_HEALTH_COOL)
         recharge_volt_mv = 4282;
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-if (chip->health == POWER_SUPPLY_HEALTH_WARM)
-	recharge_volt_mv = 4050;
-if (chip->health == POWER_SUPPLY_HEALTH_COOL)
-	recharge_volt_mv = 4250;
 #else
 	if (chip->health == POWER_SUPPLY_HEALTH_WARM)
 		recharge_volt_mv = 4050;
@@ -4008,11 +3963,6 @@ static int fg_psy_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CC_STEP_SEL:
 		pval->intval = chip->ttf.cc_step.sel;
 		break;
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	case POWER_SUPPLY_PROP_FG_RESET_CLOCK:
-		pval->intval = 0;
-		break;
-#endif
 	default:
 		pr_err("unsupported property %d\n", psp);
 		rc = -EINVAL;
@@ -4024,101 +3974,7 @@ static int fg_psy_get_property(struct power_supply *psy,
 
 	return 0;
 }
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-#define BCL_RESET_RETRY_COUNT 4
-static int fg_bcl_reset(struct fg_chip *chip)
-{
-	int i, ret, rc = 0;
-	u8 val, peek_mux;
-	bool success = false;
-	pr_err("FG_BCL_RESET START\n");
-	/* Read initial value of peek mux1 */
-	rc = fg_read(chip, BATT_INFO_PEEK_MUX1(chip), &peek_mux, 1);
-	if (rc < 0) {
-		pr_err("Error in writing peek mux1, rc=%d\n", rc);
-		return rc;
-	}
-	pr_err("FG_BCL_RESET PEEK_MUX = %d\n",peek_mux);
-	val = 0x83;
-	rc = fg_write(chip, BATT_INFO_PEEK_MUX1(chip), &val, 1);
-	if (rc < 0) {
-		pr_err("Error in writing peek mux1, rc=%d\n", rc);
-		return rc;
-	}
 
-	mutex_lock(&chip->sram_rw_lock);
-	for (i = 0; i < BCL_RESET_RETRY_COUNT; i++) {
-		pr_err("FG_BCL_RESET RETRY\n");
-		rc = fg_dma_mem_req(chip, true);
-		if (rc < 0) {
-			pr_err("Error in locking memory, rc=%d\n", rc);
-			goto unlock;
-		}
-
-		rc = fg_read(chip, BATT_INFO_RDBACK(chip), &val, 1);
-		if (rc < 0) {
-			pr_err("Error in reading rdback, rc=%d\n", rc);
-			goto release_mem;
-		}
-		pr_err("FG_BCL_RESET VAL = %d\n",val);
-		if (val & PEEK_MUX1_BIT) {
-			pr_err("FG_BCL_RESET DEBUG\n");
-			rc = fg_masked_write(chip, BATT_SOC_RST_CTRL0(chip),
-						BCL_RESET_BIT, BCL_RESET_BIT);
-			if (rc < 0) {
-				pr_err("Error in writing RST_CTRL0, rc=%d\n",
-						rc);
-				goto release_mem;
-			}
-
-			rc = fg_dma_mem_req(chip, false);
-			if (rc < 0)
-				pr_err("Error in unlocking memory, rc=%d\n", rc);
-
-			/* Delay of 2ms */
-			usleep_range(2000, 3000);
-			ret = fg_masked_write(chip, BATT_SOC_RST_CTRL0(chip),
-						BCL_RESET_BIT, 0);
-			if (ret < 0)
-				pr_err("Error in writing RST_CTRL0, rc=%d\n",
-						rc);
-			if (!rc && !ret)
-				success = true;
-
-			goto unlock;
-		} else {
-			rc = fg_dma_mem_req(chip, false);
-			if (rc < 0) {
-				pr_err("Error in unlocking memory, rc=%d\n", rc);
-				return rc;
-			}
-			success = false;
-			pr_err_ratelimited("PEEK_MUX1 not set retrying...\n");
-			msleep(1000);
-		}
-	}
-
-release_mem:
-	rc = fg_dma_mem_req(chip, false);
-	if (rc < 0)
-		pr_err("Error in unlocking memory, rc=%d\n", rc);
-
-unlock:
-	ret = fg_write(chip, BATT_INFO_PEEK_MUX1(chip), &peek_mux, 1);
-	if (ret < 0) {
-		pr_err("Error in writing peek mux1, rc=%d\n", rc);
-		mutex_unlock(&chip->sram_rw_lock);
-		return ret;
-	}
-
-	mutex_unlock(&chip->sram_rw_lock);
-
-	if (!success)
-		return -EAGAIN;
-	else
-		return rc;
-}
-#endif
 static int fg_psy_set_property(struct power_supply *psy,
 				  enum power_supply_property psp,
 				  const union power_supply_propval *pval)
@@ -4165,15 +4021,6 @@ static int fg_psy_set_property(struct power_supply *psy,
 			return -EINVAL;
 		}
 		break;
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	case POWER_SUPPLY_PROP_FG_RESET_CLOCK:
-		rc = fg_bcl_reset(chip);
-		if (rc < 0) {
-			pr_err("Error in resetting BCL clock, rc=%d\n", rc);
-			return rc;
-		}
-		break;
-#endif
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
 		if (chip->cl.active) {
 			pr_warn("Capacity learning active!\n");
@@ -4231,9 +4078,6 @@ static int fg_property_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
 	case POWER_SUPPLY_PROP_CC_STEP:
 	case POWER_SUPPLY_PROP_CC_STEP_SEL:
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	case POWER_SUPPLY_PROP_FG_RESET_CLOCK:
-#endif
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
 	case POWER_SUPPLY_PROP_COLD_TEMP:
 	case POWER_SUPPLY_PROP_COOL_TEMP:
@@ -4316,9 +4160,6 @@ static enum power_supply_property fg_psy_props[] = {
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
 	POWER_SUPPLY_PROP_CC_STEP,
 	POWER_SUPPLY_PROP_CC_STEP_SEL,
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	POWER_SUPPLY_PROP_FG_RESET_CLOCK,
-#endif
 };
 
 static const struct power_supply_desc fg_psy_desc = {

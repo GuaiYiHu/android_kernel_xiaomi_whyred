@@ -140,10 +140,6 @@ fw-shipped-$(CONFIG_YAM) += yam/1200.bin yam/9600.bin
 fw-shipped-$(CONFIG_TOUCHSCREEN_NVT_D2S) += novatek/tianma_nt36672_miui_d2s.bin
 fw-shipped-$(CONFIG_TOUCHSCREEN_NVT_D2S) += novatek/jdi_nt36672_miui_d2s.bin
 
-# HMI_L6662_A01
-fw-shipped-$(CONFIG_TOUCHSCREEN_NVT_A) += novatek/shenchao_nt36672a_miui_e7t.bin
-fw-shipped-$(CONFIG_TOUCHSCREEN_NVT_A) += novatek/tianma_nt36672a_miui_e7t.bin
-
 # HMI_L6653_A01
 fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_E7S_FW_UPDATE) += synaptics/tianma_td4310_miui_e7s.img
 fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_E7S_FW_UPDATE) += synaptics/shenchao_td4310_miui_e7s.img

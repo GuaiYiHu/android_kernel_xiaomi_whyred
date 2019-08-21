@@ -155,19 +155,6 @@ static struct jeita_fcc_cfg jeita_fcc_config = {
 		{451,		600,		1200000},
 	},
 };
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-static struct jeita_fcc_cfg jeita_fcc_config = {
-	.psy_prop	= POWER_SUPPLY_PROP_TEMP,
-	.prop_name	= "BATT_TEMP",
-	.hysteresis	= 0, /* 1degC hysteresis */
-	.fcc_cfg	= {
-		/* TEMP_LOW	TEMP_HIGH	FCC */
-		{0,		50,		400000},
-		{51,		150,		1200000},
-		{151,		450,		2500000},
-		{451,		600,		2000000},
-	},
-};
 #endif
 static struct jeita_fv_cfg jeita_fv_config = {
 	.psy_prop	= POWER_SUPPLY_PROP_TEMP,
@@ -380,11 +367,7 @@ static int handle_jeita(struct step_chg_info *chip)
 		return -EINVAL;
 
 	vote(chip->fcc_votable, JEITA_VOTER, true, fcc_ua);
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	if((temp < 0) || (temp >600)){
-		vote(chip->fcc_votable, JEITA_VOTER, true, 0);
-	}
-#endif
+
 	rc = get_val(jeita_fv_config.fv_cfg, jeita_fv_config.hysteresis,
 			chip->jeita_fv_index,
 			pval.intval,

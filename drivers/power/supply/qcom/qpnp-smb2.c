@@ -38,12 +38,10 @@ union power_supply_propval lct_therm_lvl_reserved;
 union power_supply_propval lct_therm_level;
 #if defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A) || defined(CONFIG_KERNEL_CUSTOM_E7S)
 union power_supply_propval lct_therm_call_level = {4,};
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-union power_supply_propval lct_therm_call_level = {5,};
 #else
 union power_supply_propval lct_therm_call_level = {3,};
 #endif
-#if defined(CONFIG_KERNEL_CUSTOM_E7T) || defined(CONFIG_KERNEL_CUSTOM_E7S)
+#if defined(CONFIG_KERNEL_CUSTOM_E7S)
 union power_supply_propval lct_therm_globe_level = {1,};
 union power_supply_propval lct_therm_india_level = {2,};
 #else
@@ -270,15 +268,6 @@ static int smb2_parse_dt(struct smb2 *chip)
 	}else{
 	rc = of_property_read_u32(node,
 				"qcom,fcc-max-ua", &chg->batt_profile_fcc_ua);
-#if defined(CONFIG_KERNEL_CUSTOM_E7T)
-	if(is_poweroff_charge == true)
-	{
-		if(hwc_check_india == 1)
-			chg->batt_profile_fcc_ua = 2200000;
-		else
-			chg->batt_profile_fcc_ua = 2300000;
-	}
-#endif
 	if (rc < 0)
 		chg->batt_profile_fcc_ua = -EINVAL;
 	}
@@ -325,7 +314,7 @@ static int smb2_parse_dt(struct smb2 *chip)
 	if (rc < 0)
 		chip->dt.wipower_max_uw = -EINVAL;
 	
-#if (defined(CONFIG_KERNEL_CUSTOM_E7S) || defined(CONFIG_KERNEL_CUSTOM_E7T))	
+#if defined(CONFIG_KERNEL_CUSTOM_E7S)	
 	if (hwc_check_india == 1){
 #endif
 	if (of_find_property(node, "qcom,thermal-mitigation", &byte_len)) {
@@ -346,7 +335,7 @@ static int smb2_parse_dt(struct smb2 *chip)
 			return rc;
 		}
 	}
-#if (defined(CONFIG_KERNEL_CUSTOM_E7S) || defined(CONFIG_KERNEL_CUSTOM_E7T))
+#if defined(CONFIG_KERNEL_CUSTOM_E7S)
 	}
 	else {
 		if (of_find_property(node, "qcom,thermal-mitigation-china", &byte_len)) {
@@ -1684,7 +1673,7 @@ static int smb2_init_hw(struct smb2 *chip)
 	vote(chg->hvdcp_enable_votable, MICRO_USB_VOTER,
 			chg->micro_usb_mode, 0);
 
-#if (defined(CONFIG_KERNEL_CUSTOM_E7S) || defined(CONFIG_KERNEL_CUSTOM_E7T))
+#if defined(CONFIG_KERNEL_CUSTOM_E7S)
 
 	/* Operate the QC2.0 in 5V/9V mode i.e. Disable 12V */
         rc = smblib_masked_write(chg, HVDCP_PULSE_COUNT_MAX_REG,
@@ -2491,12 +2480,6 @@ static void thermal_fb_notifier_resume_work(struct work_struct *work)
 		}
 	}
 	else if (LctIsInCall == 1)
-		smblib_set_prop_system_temp_level(chg,&lct_therm_call_level);
-	else
-		smblib_set_prop_system_temp_level(chg,&lct_therm_lvl_reserved);
-	LctThermal = 0;
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-	if (LctIsInCall == 1)
 		smblib_set_prop_system_temp_level(chg,&lct_therm_call_level);
 	else
 		smblib_set_prop_system_temp_level(chg,&lct_therm_lvl_reserved);

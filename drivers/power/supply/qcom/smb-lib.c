@@ -1257,7 +1257,7 @@ static int smblib_hvdcp_hw_inov_dis_vote_callback(struct votable *votable,
 	struct smb_charger *chg = data;
 	int rc;
 
-	#if (defined (CONFIG_KERNEL_CUSTOM_D2S) || defined (CONFIG_KERNEL_CUSTOM_E7S) || defined(CONFIG_KERNEL_CUSTOM_F7A) || defined(CONFIG_KERNEL_CUSTOM_E7T))
+	#if (defined (CONFIG_KERNEL_CUSTOM_D2S) || defined (CONFIG_KERNEL_CUSTOM_E7S) || defined(CONFIG_KERNEL_CUSTOM_F7A))
 	disable = 0;
 	#endif
 	if (disable) {
@@ -2055,17 +2055,6 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 	if ((lct_backlight_off) && (LctIsInCall == 0) && (val->intval > 2)) {
 		return 0;
 	}
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-	if (hwc_check_india == 1) {	
-		if ((lct_backlight_off) && (LctIsInCall == 0) && (val->intval > 3)) {
-		    return 0;
-		}
-	}
-	else {
-		if ((lct_backlight_off) && (LctIsInCall == 0) && (val->intval > 3)) {
-		    return 0;
-		}
-	}
 #else
 	if ((lct_backlight_off) && (LctIsInCall == 0) && (val->intval > 0) && (hwc_check_india == 0)) {
 	    return 0;
@@ -2078,10 +2067,6 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 	if ((LctIsInCall == 1) && (val->intval != 4)) {
 			return 0;
 		}
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-	if ((LctIsInCall == 1) && (val->intval != 5)) {
-		return 0;
-	}
 #endif
 	#if defined(CONFIG_KERNEL_CUSTOM_D2S)
 	if ((LctIsInVideo == 1) && (val->intval != 6) && (lct_backlight_off == 0) && (hwc_check_india == 1)) {
@@ -2103,11 +2088,6 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 	{
 		vote(chg->pl_disable_votable, THERMAL_DAEMON_VOTER,false,0);
 	}
-#elif defined (CONFIG_KERNEL_CUSTOM_E7T)
-	else if(chg->system_temp_level <= 2)
-	{
-		vote(chg->pl_disable_votable, THERMAL_DAEMON_VOTER,false,0);
-	}
 #endif
 	else
 	{
@@ -2121,13 +2101,9 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 			THERMAL_DAEMON_VOTER, true, 0);
 
 	vote(chg->chg_disable_votable, THERMAL_DAEMON_VOTER, false, 0);
-	if (chg->system_temp_level == 0) {
+	if (chg->system_temp_level == 0)
 		return vote(chg->fcc_votable, THERMAL_DAEMON_VOTER, false, 0);
-		pr_err("lct smblib_set_prop_system_temp_level 0 false fcc_votable\n");
-	}
-	
-	pr_err("lct smblib_set_prop_system_temp_level >0 fcc_votable\n");
-	
+
 	vote(chg->fcc_votable, THERMAL_DAEMON_VOTER, true,
 			chg->thermal_mitigation[chg->system_temp_level]);
 	return 0;
@@ -2231,8 +2207,6 @@ static int smblib_force_vbus_voltage(struct smb_charger *chg, u8 val)
 #if defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 #define MAX_PLUSE_COUNT_ALLOWED 8
 #elif defined(CONFIG_KERNEL_CUSTOM_E7S)
-#define MAX_PLUSE_COUNT_ALLOWED 15
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
 #define MAX_PLUSE_COUNT_ALLOWED 15
 #else
 #define MAX_PLUSE_COUNT_ALLOWED 8
@@ -2751,8 +2725,6 @@ int smblib_get_prop_die_health(struct smb_charger *chg,
 #if defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 #define HVDCP_CURRENT_UA		2900000
 #elif defined(CONFIG_KERNEL_CUSTOM_E7S)
-#define HVDCP_CURRENT_UA		2000000
-#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
 #define HVDCP_CURRENT_UA		2000000
 #else
 #define HVDCP_CURRENT_UA		2900000
@@ -4003,8 +3975,6 @@ static void smblib_force_legacy_icl(struct smb_charger *chg, int pst)
 		#elif defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 		vote(chg->usb_icl_votable, USER_VOTER, false, 0);
 		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 1000000);
-		#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 1000000);
 		#else
 		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 1000000);
 		#endif
@@ -4013,8 +3983,6 @@ static void smblib_force_legacy_icl(struct smb_charger *chg, int pst)
 	case POWER_SUPPLY_TYPE_USB_HVDCP:
 		#if defined(CONFIG_KERNEL_CUSTOM_E7S)
 		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 1500000);
-		#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 2000000);
 		#elif defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 		vote(chg->usb_icl_votable, USER_VOTER, true, 1500000);
 		#else
@@ -4024,8 +3992,6 @@ static void smblib_force_legacy_icl(struct smb_charger *chg, int pst)
 		break;
 	case POWER_SUPPLY_TYPE_USB_HVDCP_3:
 		#if defined (CONFIG_KERNEL_CUSTOM_E7S)
-		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 2000000);
-		#elif defined(CONFIG_KERNEL_CUSTOM_E7T)
 		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 2000000);
 		#elif defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 		vote(chg->usb_icl_votable, USER_VOTER, false, 0);
@@ -4125,7 +4091,7 @@ static void smblib_handle_apsd_done(struct smb_charger *chg, bool rising)
 			smblib_set_prop_pd_active(chg, &pval);
 			chg->float_rerun_apsd = false;
 		} else if (apsd_result->bit & FLOAT_CHARGER_BIT) {
-			#if defined (CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A) || defined(CONFIG_KERNEL_CUSTOM_E7T)
+			#if defined (CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 			vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 1000000);
 			#else
 			vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 500000);
