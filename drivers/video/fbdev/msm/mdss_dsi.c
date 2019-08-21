@@ -47,9 +47,6 @@ static struct mdss_dsi_data *mdss_dsi_res;
 #define DSI_ENABLE_PC_LATENCY PM_QOS_DEFAULT_VALUE
 
 static struct pm_qos_request mdss_dsi_pm_qos_request;
-extern int mdss_first_set_feature(struct mdss_panel_data *pdata,int first_ce_state,int first_cabc_state,int first_srgb_state,int first_gamma_state,
-		int first_cabc_movie_state,int first_cabc_still_state);
-
 
 #ifdef DSI_ACCESS
 
@@ -731,13 +728,13 @@ static int mdss_dsi_panel_power_ctrl(struct mdss_panel_data *pdata,
 	case MDSS_PANEL_POWER_ON:
 		if (mdss_dsi_is_panel_on_lp(pdata))
 			ret = mdss_dsi_panel_power_lp(pdata, false);
-		else{
-			if(ESD_TE_status){
+		else {
+			if(ESD_TE_status) {
 				ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 							panel_data);
 
 				ret = mdss_dsi_panel_reset(pdata, 0);
-				if(ret){
+				if(ret) {
 					pr_warn("%s: Panel reset failed. rc=%d\n", __func__, ret);
 					ret = 0;
 				}
@@ -1878,103 +1875,103 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 		return -EINVAL;
 	}
 
-    if(val2 == 1){
+    if(val2 == 1) {
 
-    }else if(val2 == 2){
+    } else if(val2 == 2) {
 		printk("guorui: %s ,download default gamma,line %d \n",__func__,__LINE__);
 		if (ctrl->gamma0_cmds.cmd_cnt){
 			mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma0_cmds,CMD_REQ_COMMIT);
 			printk("guorui: %s ,gamma0,line %d \n",__func__,__LINE__);
             return 0;
 		}	
-    }else{
+    } else {
         pr_err("%s:val2 not available\n",__func__);
 		return -EINVAL;
     }
     
 	mdss_dsi_read_reg(ctrl,0xa1,&val0,&val1);
 
-    if(0 == val0 || 0 == val1){
+    if(0 == val0 || 0 == val1) {
         printk("guorui: %s please check reg 0xa1 ,val0:0x%x,val1:0x%x\n",__func__,val0,val1);
         return 0;
     }
 
-	if(val0 <= 0x8a && val0 >= 0x76){
-		if(val1 <= 0x85 && val1 >= 0x71){
+	if(val0 <= 0x8a && val0 >= 0x76) {
+		if(val1 <= 0x85 && val1 >= 0x71) {
 			printk("guorui: %s ,no need for gamma balance,line %d \n",__func__,__LINE__);
 			return 0;
-		}else if(val1 <= 0x6b && val1 >= 0x62){
-			if (ctrl->gamma1_cmds.cmd_cnt){
+		} else if(val1 <= 0x6b && val1 >= 0x62) {
+			if (ctrl->gamma1_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma1_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma1,line %d \n",__func__,__LINE__);
                 return 0;
 			}	
-		}else if(val1 <= 0x70 && val1 >= 0x6c){
+		} else if(val1 <= 0x70 && val1 >= 0x6c) {
 			if (ctrl->gamma2_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma2_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma2,line %d \n",__func__,__LINE__);
                 return 0;
 			}
-		}else if(val1 <= 0x8a && val1 >= 0x86){
+		} else if(val1 <= 0x8a && val1 >= 0x86) {
 			if (ctrl->gamma3_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma3_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma3,line %d \n",__func__,__LINE__);
                 return 0;
 			}
-		}else if(val1 <= 0x94 && val1 >= 0x8b){
+		} else if(val1 <= 0x94 && val1 >= 0x8b) {
 			if (ctrl->gamma4_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma4_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma4,line %d \n",__func__,__LINE__);
                 return 0;
 			}
 		}
-	}else if(val0 <= 0x70 && val0 >= 0x67){
+	} else if(val0 <= 0x70 && val0 >= 0x67) {
 		if(val1 <= 0x6b && val1 >= 0x62){
-			if (ctrl->gamma9_cmds.cmd_cnt){
+			if (ctrl->gamma9_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma9_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma9,line %d \n",__func__,__LINE__);
                 return 0;
 			}	
-		}else if(val1 <= 0x70 && val1 >= 0x6c){
+		} else if(val1 <= 0x70 && val1 >= 0x6c) {
 			if (ctrl->gamma10_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma10_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma10,line %d \n",__func__,__LINE__);
                 return 0;
 			}
-		}else if(val1 <= 0x8a && val1 >= 0x86){
-			if (ctrl->gamma11_cmds.cmd_cnt){
+		} else if(val1 <= 0x8a && val1 >= 0x86) {
+			if (ctrl->gamma11_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma11_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma11,line %d \n",__func__,__LINE__);
                 return 0;
 			}
-		}else if(val1 <= 0x94 && val1 >= 0x8b){
-			if (ctrl->gamma12_cmds.cmd_cnt){
+		} else if(val1 <= 0x94 && val1 >= 0x8b) {
+			if (ctrl->gamma12_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma12_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma12,line %d \n",__func__,__LINE__);
                 return 0;
 			}
 		}
-	}else if(val0 <= 0x75 && val0 >= 0x71){
-		if(val1 <= 0x6b && val1 >= 0x62){
-			if (ctrl->gamma13_cmds.cmd_cnt){
+	} else if(val0 <= 0x75 && val0 >= 0x71) {
+		if(val1 <= 0x6b && val1 >= 0x62) {
+			if (ctrl->gamma13_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma13_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma13,line %d \n",__func__,__LINE__);
                 return 0;
 			}	
-		}else if(val1 <= 0x70 && val1 >= 0x6c){
-			if (ctrl->gamma14_cmds.cmd_cnt){
+		}else if(val1 <= 0x70 && val1 >= 0x6c) {
+			if(ctrl->gamma14_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma14_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma14,line %d \n",__func__,__LINE__);
                 return 0;
 			}
-		}else if(val1 <= 0x8a && val1 >= 0x86){
-			if (ctrl->gamma15_cmds.cmd_cnt){
+		} else if(val1 <= 0x8a && val1 >= 0x86) {
+			if(ctrl->gamma15_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma15_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma15,line %d \n",__func__,__LINE__);
                 return 0;
 			}
-		}else if(val1 <= 0x94 && val1 >= 0x8b){
-			if (ctrl->gamma16_cmds.cmd_cnt){
+		} else if(val1 <= 0x94 && val1 >= 0x8b) {
+			if(ctrl->gamma16_cmds.cmd_cnt) {
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma16_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma16,line %d \n",__func__,__LINE__);
                 return 0;
@@ -2180,10 +2177,7 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 			ATRACE_END("dsi_panel_on");
 		}
 	}
-#if defined(CONFIG_KERNEL_CUSTOM_F7A)|| defined(CONFIG_KERNEL_DRIVER_D2S_CN) || defined(CONFIG_KERNEL_CUSTOM_E7T) || defined(CONFIG_KERNEL_CUSTOM_F7S)
-#else
-    mdss_first_set_feature(pdata, -1,1,-1, -1, -1, -1);
-#endif
+
 	if ((pdata->panel_info.type == MIPI_CMD_PANEL) &&
 		mipi->vsync_enable && mipi->hw_vsync_mode) {
 		mdss_dsi_set_tear_on(ctrl_pdata);

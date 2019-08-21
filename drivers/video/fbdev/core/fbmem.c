@@ -1089,7 +1089,7 @@ fb_blank(struct fb_info *info, int blank)
 			fb_notifier_call_chain(FB_R_EARLY_EVENT_BLANK, &event);
 	}
 	if(!ret){
-	info->blank=blank;
+		info->blank=blank;
 	}
  	return ret;
 }
@@ -1652,7 +1652,7 @@ static int do_register_framebuffer(struct fb_info *fb_info)
 		if (!registered_fb[i])
 			break;
 	fb_info->node = i;
-	fb_info->blank=-1;
+	fb_info->blank = -1;
 	atomic_set(&fb_info->count, 1);
 	mutex_init(&fb_info->lock);
 	mutex_init(&fb_info->mm_lock);

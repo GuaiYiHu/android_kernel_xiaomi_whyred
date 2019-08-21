@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#define pr_fmt(fmt) "lct QCOM-BATT: %s: " fmt, __func__
+#define pr_fmt(fmt) "QCOM-BATT: %s: " fmt, __func__
 
 #include <linux/device.h>
 #include <linux/delay.h>
@@ -89,7 +89,7 @@ enum print_reason {
 	PR_PARALLEL	= BIT(0),
 };
 
-static int debug_mask = 0xff;
+static int debug_mask;
 module_param_named(debug_mask, debug_mask, int, S_IRUSR | S_IWUSR);
 
 #define pl_dbg(chip, reason, fmt, ...)				\
@@ -365,7 +365,7 @@ static void pl_taper_work(struct work_struct *work)
 	pl_dbg(chip, PR_PARALLEL, "entering parallel taper work slave_fcc = %d\n",
 			chip->slave_fcc_ua);
 	if (chip->slave_fcc_ua < MINIMUM_PARALLEL_FCC_UA) {
-		pl_dbg(chip, PR_PARALLEL, "terminating parallel's share lower than 500mA smb1351\n");
+		pl_dbg(chip, PR_PARALLEL, "terminating parallel's share lower than 500mA\n");
 		vote(chip->pl_disable_votable, TAPER_END_VOTER, true, 0);
 		goto done;
 	}
@@ -379,7 +379,7 @@ static void pl_taper_work(struct work_struct *work)
 
 	chip->charge_type = pval.intval;
 	if (pval.intval == POWER_SUPPLY_CHARGE_TYPE_TAPER) {
-		pl_dbg(chip, PR_PARALLEL, "master is taper charging; reducing smb1351 slave FCC\n");
+		pl_dbg(chip, PR_PARALLEL, "master is taper charging; reducing slave FCC\n");
 
 		vote(chip->pl_awake_votable, TAPER_END_VOTER, true, 0);
 		/* Reduce the taper percent by 25 percent */
@@ -1151,11 +1151,10 @@ static void handle_main_charge_type(struct pl_data *chip)
 		pr_err("Couldn't get batt charge type rc=%d\n", rc);
 		return;
 	}
-	pr_err("chip->charge_type =%d, pval.intval=%d \n", chip->charge_type,pval.intval);
+
 	/* not fast/not taper state to disables parallel */
 	if ((pval.intval != POWER_SUPPLY_CHARGE_TYPE_FAST)
 		&& (pval.intval != POWER_SUPPLY_CHARGE_TYPE_TAPER)) {
-		pr_err("main charge CHG_STATE_VOTER disable parllerl charging smb1351\n");
 		vote(chip->pl_disable_votable, CHG_STATE_VOTER, true, 0);
 		chip->taper_pct = 100;
 		vote(chip->pl_disable_votable, TAPER_END_VOTER, false, 0);

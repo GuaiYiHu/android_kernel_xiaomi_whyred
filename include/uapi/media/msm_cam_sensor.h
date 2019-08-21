@@ -266,9 +266,7 @@ enum eeprom_cfg_type_t {
 	CFG_EEPROM_WRITE_DATA,
 	CFG_EEPROM_GET_MM_INFO,
 	CFG_EEPROM_INIT,
-
 	LAVENDER_CFG_EEPROM_WRITE_DATA,
-
 };
 
 struct eeprom_get_t {
@@ -332,9 +330,7 @@ struct msm_eeprom_cfg_data {
 		struct eeprom_write_t write_data;
 		struct eeprom_get_cmm_t get_cmm_data;
 		struct msm_eeprom_info_t eeprom_info;
-
 		struct lavender_eeprom_write_t lavender_write_data;
-
 	} cfg;
 };
 

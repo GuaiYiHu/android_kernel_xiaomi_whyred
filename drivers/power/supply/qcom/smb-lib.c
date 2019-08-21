@@ -1013,13 +1013,8 @@ override_suspend_config:
 		if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB)
 			/* For std cable with type = SDP never override */
 			override = false;
-		#ifdef CONFIG_KERNEL_CUSTOM_FACTORY
-		else if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_CDP
-			&& icl_ua == 500000)
-		#else
 		else if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_CDP
 			&& icl_ua == 1500000)
-		#endif
 			/*
 			 * For std cable with type = CDP override only if
 			 * current is not 1500mA
@@ -2746,11 +2741,7 @@ int smblib_get_prop_die_health(struct smb_charger *chg,
 }
 
 #define SDP_CURRENT_UA			500000
-#ifdef CONFIG_KERNEL_CUSTOM_FACTORY
-#define CDP_CURRENT_UA			500000
-#else
 #define CDP_CURRENT_UA			1500000
-#endif
 #define DCP_CURRENT_UA			2000000
 #if defined(CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 #define HVDCP2_CURRENT_UA		1500000
@@ -3991,11 +3982,7 @@ static void smblib_force_legacy_icl(struct smb_charger *chg, int pst)
 		#if defined (CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)
 		vote(chg->usb_icl_votable, USER_VOTER, false, 0);
 		#endif
-		#ifdef CONFIG_KERNEL_CUSTOM_FACTORY
-		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 500000);
-		#else
 		vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true, 1500000);
-		#endif
 		break;
 	case POWER_SUPPLY_TYPE_USB_DCP:
 		#if defined (CONFIG_KERNEL_CUSTOM_D2S) || defined(CONFIG_KERNEL_CUSTOM_F7A)

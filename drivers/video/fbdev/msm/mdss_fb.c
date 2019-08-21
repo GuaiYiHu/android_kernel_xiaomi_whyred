@@ -2761,6 +2761,8 @@ static int mdss_fb_blank_unblank(struct msm_fb_data_type *mfd)
     cabc_resume = false;
     srgb_resume = false;
     gamma_resume = false;
+    cabc_movie_resume = false;
+    cabc_still_resume = false;
 error:
 	return ret;
 }
@@ -2845,11 +2847,13 @@ static int mdss_fb_blank_sub(int blank_mode, struct fb_info *info,
 	case FB_BLANK_POWERDOWN:
 	default:
 		req_power_state = MDSS_PANEL_POWER_OFF;
-        ce_resume = true;
-        cabc_resume = true;
-        srgb_resume = true;
-        gamma_resume = true;
-		printk("%s:blank powerdown called\n",__func__);
+		ce_resume = true;
+		cabc_resume = true;
+		srgb_resume = true;
+		gamma_resume = true;
+		cabc_movie_resume = true;
+		cabc_still_resume = true;
+		pr_debug("blank powerdown called\n");
 		ret = mdss_fb_blank_blank(mfd, req_power_state);
 		break;
 	}
@@ -2897,7 +2901,7 @@ static int mdss_fb_blank(int blank_mode, struct fb_info *info)
 		ret = 0;
 		goto end;
 	}
-	pr_info("%s: blank_mode: %d\n",__func__, blank_mode);
+	pr_debug("mode: %d\n", blank_mode);
 
 	pdata = dev_get_platdata(&mfd->pdev->dev);
 

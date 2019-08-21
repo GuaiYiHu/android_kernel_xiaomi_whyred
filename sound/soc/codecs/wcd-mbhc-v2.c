@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-#define DEBUG
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -2344,6 +2343,7 @@ static irqreturn_t wcd_mbhc_hphr_ocp_irq(int irq, void *data)
 done:
 	return IRQ_HANDLED;
 }
+
 static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 {
 	int ret = 0;
@@ -2641,6 +2641,7 @@ static int wcd_mbhc_usb_c_event_changed(struct notifier_block *nb,
 
 	if (ptr != mbhc->usb_psy || evt != PSY_EVENT_PROP_CHANGED)
 		return 0;
+
 	ret = power_supply_get_property(mbhc->usb_psy,
 			POWER_SUPPLY_PROP_TYPEC_MODE, &mode);
 	if (ret) {

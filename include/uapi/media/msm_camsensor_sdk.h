@@ -325,7 +325,6 @@ struct msm_vcm_id_info_t {
 	enum msm_cci_i2c_master_t cci_i2c_master;
 };
 
-
 struct msm_camera_sensor_slave_info {
 	char sensor_name[32];
 	char eeprom_name[32];

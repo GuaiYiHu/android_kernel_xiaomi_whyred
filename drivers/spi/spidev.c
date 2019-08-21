@@ -89,7 +89,7 @@ struct spidev_data {
 static LIST_HEAD(device_list);
 static DEFINE_MUTEX(device_list_lock);
 
-static unsigned bufsiz = 4096*8;
+static unsigned bufsiz = 4096 * 8;
 
 module_param(bufsiz, uint, S_IRUGO);
 MODULE_PARM_DESC(bufsiz, "data bytes in biggest supported SPI message");
@@ -168,7 +168,6 @@ spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 
 	mutex_lock(&spidev->buf_lock);
 
-
 	if (!spidev->rx_buffer) {
 		spidev->rx_buffer = kmalloc(bufsiz, GFP_KERNEL);
 		if (!spidev->rx_buffer) {
@@ -177,7 +176,6 @@ spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 			goto read_unlock;
 		}
 	}
-
 
 	status = spidev_sync_read(spidev, count);
 	if (status > 0) {
@@ -190,12 +188,10 @@ spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 			status = status - missing;
 	}
 
-
 	kfree(spidev->rx_buffer);
 	spidev->rx_buffer = NULL;
 
 read_unlock:
-
 
 	mutex_unlock(&spidev->buf_lock);
 
@@ -221,7 +217,6 @@ spidev_write(struct file *filp, const char __user *buf,
 
 	mutex_lock(&spidev->buf_lock);
 
-
 	if (!spidev->tx_buffer) {
 		spidev->tx_buffer = kmalloc(count, GFP_KERNEL);
 		if (!spidev->tx_buffer) {
@@ -231,19 +226,16 @@ spidev_write(struct file *filp, const char __user *buf,
 		}
 	}
 
-
 	missing = copy_from_user(spidev->tx_buffer, buf, count);
 	if (missing == 0)
 		status = spidev_sync_write(spidev, count);
 	else
 		status = -EFAULT;
 
-
 	kfree(spidev->tx_buffer);
 	spidev->tx_buffer = NULL;
 
 write_unlock:
-
 
 	mutex_unlock(&spidev->buf_lock);
 
@@ -287,7 +279,6 @@ static int spidev_message(struct spidev_data *spidev,
 			goto txbuffer_err;
 		}
 	}
-
 
 	tx_buf = spidev->tx_buffer;
 	rx_buf = spidev->rx_buffer;

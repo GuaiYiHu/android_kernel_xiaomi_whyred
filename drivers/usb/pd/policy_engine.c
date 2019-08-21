@@ -11,7 +11,6 @@
  * GNU General Public License for more details.
  */
 
-
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/hrtimer.h>
@@ -2853,6 +2852,7 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 	}
 
 	typec_mode = val.intval;
+
 	ret = power_supply_get_property(pd->usb_psy,
 			POWER_SUPPLY_PROP_PE_START, &val);
 	if (ret) {
@@ -2860,6 +2860,7 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 				ret);
 		return ret;
 	}
+
 	/* Don't proceed if PE_START=0 as other props may still change */
 	if (!val.intval && !pd->pd_connected &&
 			typec_mode != POWER_SUPPLY_TYPEC_NONE)
@@ -2871,6 +2872,7 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 		usbpd_err(&pd->dev, "Unable to read USB PRESENT: %d\n", ret);
 		return ret;
 	}
+
 	pd->vbus_present = val.intval;
 
 	ret = power_supply_get_property(pd->usb_psy,
@@ -2879,6 +2881,7 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 		usbpd_err(&pd->dev, "Unable to read USB TYPE: %d\n", ret);
 		return ret;
 	}
+
 	pd->psy_type = val.intval;
 
 	/*
@@ -2969,6 +2972,7 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 				typec_mode);
 		break;
 	}
+
 	/* queue state machine due to CC state change */
 	kick_sm(pd, 0);
 	return 0;
@@ -3941,7 +3945,7 @@ struct usbpd *usbpd_create(struct device *parent)
 		goto del_pd;
 	}
 	INIT_WORK(&pd->sm_work, usbpd_sm);
-	INIT_DELAYED_WORK(&pd->vbus_work,usbpd_vbus_sm);
+	INIT_DELAYED_WORK(&pd->vbus_work, usbpd_vbus_sm);
 	hrtimer_init(&pd->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	pd->timer.function = pd_timeout;
 	mutex_init(&pd->swap_lock);

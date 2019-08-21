@@ -567,14 +567,13 @@ static int qpnp_hap_mod_enable(struct qpnp_hap *hap, bool on)
 				break;
 			}
 		}
-		pr_info("zjl %s  11 val == %d\n", __func__, val);
+
 		if (i >= QPNP_HAP_MAX_RETRIES)
 			pr_debug("Haptics Busy. Force disable\n");
 	}
 
 	val = on ? QPNP_HAP_EN_BIT : 0;
 	rc = qpnp_hap_write_reg(hap, QPNP_HAP_EN_CTL_REG(hap->base), val);
-	pr_info("zjl %s  end val == %d\n", __func__, val);
 	if (rc < 0)
 		return rc;
 
@@ -1053,8 +1052,8 @@ static int qpnp_hap_parse_buffer_dt(struct qpnp_hap *hap)
 		memcpy(hap->wave_samp, prop->value, QPNP_HAP_WAV_SAMP_LEN);
 	}
 	
-		prop = of_find_property(pdev->dev.of_node,
-			"qcom,wave-samples-two", &temp);
+	prop = of_find_property(pdev->dev.of_node,
+		"qcom,wave-samples-two", &temp);
 	if (!prop || temp != QPNP_HAP_WAV_SAMP_LEN) {
 		pr_err("Invalid wave samples, use default");
 		for (i = 0; i < QPNP_HAP_WAV_SAMP_LEN; i++)
@@ -1063,8 +1062,8 @@ static int qpnp_hap_parse_buffer_dt(struct qpnp_hap *hap)
 		memcpy(hap->wave_samp_two, prop->value, QPNP_HAP_WAV_SAMP_LEN);
 	}
 	
-		prop = of_find_property(pdev->dev.of_node,
-			"qcom,wave-samples-three", &temp);
+	prop = of_find_property(pdev->dev.of_node,
+		"qcom,wave-samples-three", &temp);
 	if (!prop || temp != QPNP_HAP_WAV_SAMP_LEN) {
 		pr_err("Invalid wave samples, use default");
 		for (i = 0; i < QPNP_HAP_WAV_SAMP_LEN; i++)
@@ -2446,9 +2445,9 @@ int qpnp_hap_play_byte(u8 data, bool on)
 	pr_debug("data=0x%x duty_per=%d\n", data, duty_percent);
 
 	rc = qpnp_hap_set(hap, true);
-pr_info("%s  zjl f   asd  7 \n", __func__);    
+
 	return rc;
-}    
+}
 EXPORT_SYMBOL(qpnp_hap_play_byte);
 
 /* worker to opeate haptics */

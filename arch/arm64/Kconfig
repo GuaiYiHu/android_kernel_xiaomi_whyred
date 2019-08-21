@@ -249,12 +249,6 @@ config KERNEL_CUSTOM_E7S
 	    help
 	            Custom for E7S_pcb.
 				
-config KERNEL_CUSTOM_FACTORY
-    default n
-        bool "Custom for hardware FACTORY_pcb"
-	    help
-	            Custom for FACTORY_pcb.
-				
 if ARM64_DMA_USE_IOMMU
 
 config ARM64_DMA_IOMMU_ALIGNMENT
@@ -309,11 +303,11 @@ config MSM_GVM
 config MSM_GVM_QUIN
 	bool "Enable virtualization Support for MSM kernel required for QUIN platform"
 	help
-	  This enables support for MSM Kernel based virtual
-	  machine for QUIN platform.
-	  This helps to enable virtual driver support.
-	  This should work on 64bit machine.
-	  If you don't know what to do here, say N.
+		This enables support for MSM Kernel based virtual
+		machine for QUIN platform.
+		This helps to enable virtual driver support.
+		This should work on 64bit machine.
+		If you don't know what to do here, say N.
 
 config BOOT_INFO
 	bool "Boot information from bootloader"
