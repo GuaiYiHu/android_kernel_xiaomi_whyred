@@ -2255,14 +2255,9 @@ int msm_common_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		break;
 
 	case MSM_BACKEND_DAI_PRI_MI2S_TX:
-#if defined(CONFIG_SND_SOC_MAX98937)
-		rate->min = rate->max = SAMPLING_RATE_48KHZ;
-		channels->min = channels->max = 2;
-#else
 		rate->min = rate->max = mi2s_tx_cfg[PRIM_MI2S].sample_rate;
 		channels->min = channels->max =
 			mi2s_tx_cfg[PRIM_MI2S].channels;
-#endif
 		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
 			       mi2s_tx_cfg[PRIM_MI2S].bit_format);
 		break;
