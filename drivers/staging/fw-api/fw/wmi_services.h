@@ -407,6 +407,17 @@ typedef  enum  {
     WMI_SERVICE_WPA3_OWE_ROAM_SUPPORT = 222, /* Indicates FW supports WPA3 OWE roaming */
     WMI_SERVICE_AUDIO_AGGR = 223, /* Indicates FW supports audio frame aggregation */
     WMI_SERVICE_6GHZ_SUPPORT = 224, /* Indicates FW supports 6GHZ (scan, connection and so on) */
+    /* WMI_SERVICE_QMI_STATS_SUPPORT
+     * Indicates FW supports stat request command WMI_REQUEST_LINK_STATS_CMDID
+     * and WMI_REQUEST_STATS_CMDID coming from QMI which will be used in
+     * runtime PM suspend.
+     */
+    WMI_SERVICE_QMI_STATS_SUPPORT = 225,
+    WMI_SERVICE_CFR_CAPTURE_FILTER_SUPPORT = 226, /* Indicate FW Supports Channel Frequency Response (CFR) via WMI_CFR_CAPTURE_FILTER_CMDID */
+    WMI_SERVICE_STA_BSS_MAX_IDLE_TIME = 227, /* Indicate FW supports BSS Max Idle time feature via WMI_VDEV_BSS_MAX_IDLE_TIME_CMDID */
+    WMI_SERVICE_BIP_CIPHER_SUPPORT = 228, /* FW supports new BIP_CIPHER suites (WMI_CIPHER_BIP_xxx) */
+    WMI_SERVICE_BW_165MHZ_SUPPORT = 229, /* Indicate FW supports bandwidth 165MHz (i.e. 6 GHz in addition to 2.4 and 5) */
+
 
     /******* ADD NEW SERVICES HERE *******/
 
