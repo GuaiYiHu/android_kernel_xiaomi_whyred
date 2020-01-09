@@ -495,6 +495,36 @@ static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal pMac, uint32_t *pMsgB
 	return false;
 }
 
+#ifdef WLAN_BCN_RECV_FEATURE
+/**
+ * lim_register_bcn_report_send_cb() - Register bcn receive start
+ * indication handler callback
+ * @mac: Pointer to Global MAC structure
+ * @msg: A pointer to the SME message buffer
+ *
+ * Once driver gets QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING vendor
+ * command with attribute for start only. LIM layer register a sme
+ * callback through this function.
+ *
+ * Return: None.
+ */
+static void lim_register_bcn_report_send_cb(struct sAniSirGlobal *mac,
+					    struct scheduler_msg *msg)
+{
+	if (!msg) {
+		pe_err("Invalid message");
+		return;
+	}
+
+	mac->lim.sme_bcn_rcv_callback = msg->callback;
+}
+#else
+static inline
+void lim_register_bcn_report_send_cb(struct sAniSirGlobal *mac,
+				     struct scheduler_msg *msg)
+{
+}
+#endif
 /**
  *lim_configure_ap_start_bss_session() - Configure the AP Start BSS in session.
  *@mac_ctx: Pointer to Global MAC structure
@@ -1473,6 +1503,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * to connect to, So input is coming from supplicant
 		 */
 		session->is11Rconnection = sme_join_req->is11Rconnection;
+		session->connected_akm = sme_join_req->akm;
 #ifdef FEATURE_WLAN_ESE
 		session->isESEconnection = sme_join_req->isESEconnection;
 #endif
@@ -1484,7 +1515,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->txLdpcIniFeatureEnabled =
 			sme_join_req->txLdpcIniFeatureEnabled;
 
-		lim_update_fils_config(session, sme_join_req);
+		lim_update_fils_config(mac_ctx, session, sme_join_req);
 		lim_update_sae_config(session, sme_join_req);
 		if (session->bssType == eSIR_INFRASTRUCTURE_MODE) {
 			session->limSystemRole = eLIM_STA_ROLE;
@@ -4797,6 +4828,9 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 		break;
 	case eWNI_SME_UPDATE_EDCA_PROFILE:
 		lim_process_sme_update_edca_params(pMac, pMsg->bodyval);
+		break;
+	case WNI_SME_REGISTER_BCN_REPORT_SEND_CB:
+		lim_register_bcn_report_send_cb(pMac, pMsg);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);
