@@ -52,8 +52,6 @@ MODULE_AUTHOR("Zhang Rui");
 MODULE_DESCRIPTION("Generic thermal management sysfs support");
 MODULE_LICENSE("GPL v2");
 
-#define THERMAL_MAX_ACTIVE	16
-
 static DEFINE_IDR(thermal_tz_idr);
 static DEFINE_IDR(thermal_cdev_idr);
 static DEFINE_MUTEX(thermal_idr_lock);
@@ -66,8 +64,6 @@ static DEFINE_MUTEX(thermal_list_lock);
 static DEFINE_MUTEX(thermal_governor_lock);
 
 static struct thermal_governor *def_governor;
-
-static struct workqueue_struct *thermal_passive_wq;
 
 static struct thermal_governor *__find_governor(const char *name)
 {
@@ -798,18 +794,17 @@ exit:
 	mutex_unlock(&thermal_list_lock);
 }
 
-static void thermal_zone_device_set_polling(struct workqueue_struct *queue,
-					    struct thermal_zone_device *tz,
+static void thermal_zone_device_set_polling(struct thermal_zone_device *tz,
 					    int delay)
 {
 	if (delay > 1000)
-		mod_delayed_work(queue, &tz->poll_queue,
+		mod_delayed_work(system_freezable_wq, &tz->poll_queue,
 				 round_jiffies(msecs_to_jiffies(delay)));
 	else if (delay)
-		mod_delayed_work(queue, &tz->poll_queue,
+		mod_delayed_work(system_freezable_wq, &tz->poll_queue,
 				 msecs_to_jiffies(delay));
 	else
-		cancel_delayed_work_sync(&tz->poll_queue);
+		cancel_delayed_work(&tz->poll_queue);
 }
 
 static void monitor_thermal_zone(struct thermal_zone_device *tz)
@@ -817,14 +812,11 @@ static void monitor_thermal_zone(struct thermal_zone_device *tz)
 	mutex_lock(&tz->lock);
 
 	if (tz->passive)
-		thermal_zone_device_set_polling(thermal_passive_wq,
-						tz, tz->passive_delay);
+		thermal_zone_device_set_polling(tz, tz->passive_delay);
 	else if (tz->polling_delay)
-		thermal_zone_device_set_polling(
-				system_freezable_power_efficient_wq,
-				tz, tz->polling_delay);
+		thermal_zone_device_set_polling(tz, tz->polling_delay);
 	else
-		thermal_zone_device_set_polling(NULL, tz, 0);
+		thermal_zone_device_set_polling(tz, 0);
 
 	mutex_unlock(&tz->lock);
 }
@@ -995,60 +987,6 @@ static void thermal_zone_device_check(struct work_struct *work)
 						      poll_queue.work);
 	thermal_zone_device_update(tz);
 }
-
-#ifdef CONFIG_THERMAL_SWITCH
-#define to_thermal_msg_device(_dev)	\
-	container_of(_dev, struct thermal_message_device, device)
-
-static ssize_t
-sconfig_show(struct device *dev, struct device_attribute *devattr,
-		       char *buf){
-	struct thermal_message_device *thermal_msg = to_thermal_msg_device(dev);
-
-	return sprintf(buf,"%d\n",thermal_msg->sconfig);
-}
-
-static ssize_t
-sconfig_store(struct device *dev, struct device_attribute *devattr,
-		const char *buf, size_t count){
-	int sconfig;
-	struct thermal_message_device *thermal_msg = to_thermal_msg_device(dev);
-
-	if (kstrtoint(buf,10,&sconfig))
-		return -EINVAL;
-
-	thermal_msg->sconfig = sconfig;
-
-	return count;
-}
-
-static DEVICE_ATTR(sconfig,0644,sconfig_show,sconfig_store);
-
-
-static ssize_t
-temp_state_show(struct device *dev, struct device_attribute *devattr,
-		       char *buf){
-	struct thermal_message_device *thermal_msg = to_thermal_msg_device(dev);
-
-	return sprintf(buf,"%d\n",thermal_msg->temp_state);
-}
-
-static ssize_t
-temp_state_store(struct device *dev, struct device_attribute *devattr,
-		const char *buf, size_t count){
-	int temp_state;
-	struct thermal_message_device *thermal_msg = to_thermal_msg_device(dev);
-
-	if (kstrtoint(buf,10,&temp_state))
-		return -EINVAL;
-
-	thermal_msg->temp_state = temp_state;
-
-	return count;
-}
-
-static DEVICE_ATTR(temp_state,0644,temp_state_show,temp_state_store);
-#endif
 
 /* sys I/F for thermal zone */
 
@@ -2459,7 +2397,7 @@ struct thermal_zone_device *thermal_zone_device_register(const char *type,
 	/* Bind cooling devices for this zone */
 	bind_tz(tz);
 
-	INIT_DEFERRABLE_WORK(&(tz->poll_queue), thermal_zone_device_check);
+	INIT_DELAYED_WORK(&(tz->poll_queue), thermal_zone_device_check);
 
 	thermal_zone_device_reset(tz);
 	/* Update the new thermal zone and mark it as already updated. */
@@ -2522,7 +2460,7 @@ void thermal_zone_device_unregister(struct thermal_zone_device *tz)
 
 	mutex_unlock(&thermal_list_lock);
 
-	thermal_zone_device_set_polling(NULL, tz, 0);
+	cancel_delayed_work_sync(&tz->poll_queue);
 
 	if (tz->type[0])
 		device_remove_file(&tz->device, &dev_attr_type);
@@ -2711,61 +2649,13 @@ static void thermal_unregister_governors(void)
 	thermal_gov_power_allocator_unregister();
 }
 
-#ifdef CONFIG_THERMAL_SWITCH
-int thermal_message_device_register(void) {
-	struct thermal_message_device *thermal_msg;
-	int result = 0;
-
-	thermal_msg = kzalloc(sizeof(struct thermal_message_device),GFP_KERNEL);
-	thermal_msg->device.class = &thermal_class;
-	dev_set_name(&thermal_msg->device,"thermal_message");
-
-	result = device_register(&thermal_msg->device);
-	if (result) {
-		kfree(thermal_msg);
-		return result;
-	}
-
-	result = device_create_file(&thermal_msg->device,&dev_attr_sconfig);
-
-	if (result)
-		goto unregister;
-
-	result = device_create_file(&thermal_msg->device,&dev_attr_temp_state);
-
-	if (result)
-		goto unregister;
-
-
-	return result;
-
-unregister:
-	device_unregister(&thermal_msg->device);
-	return result;
-}
-
-
-void thermal_message_device_unregister(void) {
-
-}
-#endif
-
 static int __init thermal_init(void)
 {
 	int result;
 
-	thermal_passive_wq = alloc_workqueue("thermal_passive_wq",
-						WQ_HIGHPRI | WQ_UNBOUND
-						| WQ_FREEZABLE,
-						THERMAL_MAX_ACTIVE);
-	if (!thermal_passive_wq) {
-		result = -ENOMEM;
-		goto error;
-	}
-
 	result = thermal_register_governors();
 	if (result)
-		goto destroy_wq;
+		goto error;
 
 	result = class_register(&thermal_class);
 	if (result)
@@ -2779,10 +2669,6 @@ static int __init thermal_init(void)
 	if (result)
 		goto exit_netlink;
 
-#ifdef CONFIG_THERMAL_SWITCH
-	result = thermal_message_device_register();
-#endif
-
 	return 0;
 
 exit_netlink:
@@ -2791,8 +2677,6 @@ unregister_class:
 	class_unregister(&thermal_class);
 unregister_governors:
 	thermal_unregister_governors();
-destroy_wq:
-	destroy_workqueue(thermal_passive_wq);
 error:
 	idr_destroy(&thermal_tz_idr);
 	idr_destroy(&thermal_cdev_idr);
@@ -2804,11 +2688,7 @@ error:
 
 static void __exit thermal_exit(void)
 {
-#ifdef CONFIG_THERMAL_SWITCH
-	thermal_message_device_unregister();
-#endif
 	of_thermal_destroy_zones();
-	destroy_workqueue(thermal_passive_wq);
 	genetlink_exit();
 	class_unregister(&thermal_class);
 	thermal_unregister_governors();
